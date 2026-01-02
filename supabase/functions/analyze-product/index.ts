@@ -15,6 +15,27 @@ interface AnalysisRequest {
   mode: 'fast' | 'deep';
 }
 
+// Generate realistic source URLs based on product
+function generateSourceUrls(productName: string, brand: string | undefined): { url: string; platform: string }[] {
+  const searchQuery = encodeURIComponent(`${productName} ${brand || ''} review`.trim());
+  const redditQuery = encodeURIComponent(`${productName}`.toLowerCase().replace(/\s+/g, '+'));
+  
+  return [
+    {
+      url: `https://www.reddit.com/search/?q=${redditQuery}&type=link`,
+      platform: 'Reddit'
+    },
+    {
+      url: `https://www.youtube.com/results?search_query=${searchQuery}`,
+      platform: 'YouTube'
+    },
+    {
+      url: `https://www.google.com/search?q=${searchQuery}`,
+      platform: 'Google'
+    }
+  ];
+}
+
 serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -36,16 +57,23 @@ serve(async (req) => {
 IMPORTANT GUIDELINES:
 - Be conservative and neutral in your assessments
 - Never use words like "fake reviews", "scam", "fraud"
-- Use professional terms like "Reality Gap", "Promotional Bias", "Community Signal Strength"
+- Use professional terms like "Reality Gap", "Promotional Noise", "Community Complaints", "Feedback Diversity", "Timing Anomalies"
 - If data is insufficient, clearly state this
 - Always return valid JSON matching the exact schema provided
 
-SCORING CRITERIA:
-- Trust Score (0-100): Overall product trustworthiness
-- Promotional Bias (0-100): How much marketing noise vs genuine feedback. Higher = less bias
-- Reality Gap (0-100): Alignment between marketing claims and real experiences. Higher = better alignment
-- Community Integrity (0-100): Quality and authenticity of community discussions. Higher = more authentic
-- Long-term Reliability (0-100): Indicators of lasting quality. Higher = more reliable
+BREAKDOWN LABELS (use these exact names):
+- Reality Gap: Difference between marketing claims and user experiences
+- Promotional Noise: Amount of paid/sponsored content vs genuine feedback
+- Timing Anomalies: Suspicious patterns in review timing
+- Community Complaints: Common issues reported by users
+- Feedback Diversity: Variety and authenticity of feedback sources
+
+SCORING (0-100 where lower is WORSE/more problematic):
+- For Reality Gap: lower = bigger gap between claims and reality
+- For Promotional Noise: lower = more promotional/sponsored content
+- For Timing Anomalies: lower = more suspicious timing patterns
+- For Community Complaints: lower = more complaints
+- For Feedback Diversity: lower = less diverse/authentic feedback
 
 STATUS THRESHOLDS:
 - 70-100: "trusted"
@@ -62,7 +90,7 @@ Provide a FAST analysis with:
 1. Overall trust score (0-100)
 2. Status (trusted/mixed/suspicious)
 3. Brief verdict (1-2 sentences)
-4. 4 breakdown scores with short descriptions
+4. 5 breakdown scores with percentages
 
 Return ONLY valid JSON in this exact format:
 {
@@ -70,11 +98,13 @@ Return ONLY valid JSON in this exact format:
   "status": "trusted" | "mixed" | "suspicious",
   "verdict": "string",
   "breakdown": [
-    {"label": "Promotional Bias", "score": number, "description": "string"},
     {"label": "Reality Gap", "score": number, "description": "string"},
-    {"label": "Community Integrity", "score": number, "description": "string"},
-    {"label": "Long-term Reliability", "score": number, "description": "string"}
-  ]
+    {"label": "Promotional Noise", "score": number, "description": "string"},
+    {"label": "Timing Anomalies", "score": number, "description": "string"},
+    {"label": "Community Complaints", "score": number, "description": "string"},
+    {"label": "Feedback Diversity", "score": number, "description": "string"}
+  ],
+  "confidence": "low" | "medium" | "high"
 }`;
 
     const userPromptDeep = `Perform a DEEP RESEARCH analysis of this product:
@@ -87,9 +117,9 @@ Provide comprehensive analysis including:
 1. Overall trust score (0-100)
 2. Status (trusted/mixed/suspicious)
 3. Detailed verdict explaining WHY this score exists (2-3 sentences)
-4. 4 breakdown scores with detailed descriptions
-5. 3-5 community quotes/signals with sources
-6. 2-4 potential risk factors to consider
+4. 5 breakdown scores with detailed descriptions
+5. 3-5 community quotes/signals with realistic source names (like "Reddit User", "Amazon Review", "YouTube Comment", "Walmart Review")
+6. 2-4 specific detected issues/problems (for "Detected Reality Gaps" section)
 
 Return ONLY valid JSON in this exact format:
 {
@@ -97,15 +127,19 @@ Return ONLY valid JSON in this exact format:
   "status": "trusted" | "mixed" | "suspicious",
   "verdict": "string",
   "breakdown": [
-    {"label": "Promotional Bias", "score": number, "description": "string"},
     {"label": "Reality Gap", "score": number, "description": "string"},
-    {"label": "Community Integrity", "score": number, "description": "string"},
-    {"label": "Long-term Reliability", "score": number, "description": "string"}
+    {"label": "Promotional Noise", "score": number, "description": "string"},
+    {"label": "Timing Anomalies", "score": number, "description": "string"},
+    {"label": "Community Complaints", "score": number, "description": "string"},
+    {"label": "Feedback Diversity", "score": number, "description": "string"}
   ],
   "communitySignals": [
-    {"source": "string", "quote": "string", "sentiment": "positive" | "neutral" | "negative"}
+    {"source": "Reddit User", "quote": "string", "sentiment": "positive" | "neutral" | "negative"},
+    {"source": "Amazon Review", "quote": "string", "sentiment": "positive" | "neutral" | "negative"},
+    {"source": "YouTube Comment", "quote": "string", "sentiment": "positive" | "neutral" | "negative"}
   ],
-  "riskFactors": ["string"]
+  "riskFactors": ["Specific issue 1", "Specific issue 2"],
+  "confidence": "low" | "medium" | "high"
 }`;
 
     const model = mode === 'fast' ? 'gpt-4o-mini' : 'gpt-4o';
@@ -153,6 +187,9 @@ Return ONLY valid JSON in this exact format:
       throw new Error('Failed to parse AI response');
     }
 
+    // Generate actual working source URLs
+    const dataSources = generateSourceUrls(productName, brand);
+
     // Generate a unique ID
     const id = crypto.randomUUID();
 
@@ -163,6 +200,7 @@ Return ONLY valid JSON in this exact format:
       productUrl,
       mode,
       ...analysisResult,
+      dataSources,
       analyzedAt: new Date().toISOString(),
     };
 

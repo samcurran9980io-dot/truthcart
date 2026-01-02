@@ -17,8 +17,14 @@ export interface BreakdownItem {
 
 export interface CommunitySignal {
   source: string;
+  sourceUrl?: string;
   quote: string;
   sentiment: 'positive' | 'neutral' | 'negative';
+}
+
+export interface DataSource {
+  url: string;
+  platform: string;
 }
 
 export interface AnalysisResult {
@@ -33,6 +39,8 @@ export interface AnalysisResult {
   breakdown: BreakdownItem[];
   communitySignals?: CommunitySignal[];
   riskFactors?: string[];
+  dataSources?: DataSource[];
+  confidence?: 'low' | 'medium' | 'high';
   analyzedAt: string;
 }
 
