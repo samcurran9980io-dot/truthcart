@@ -17,7 +17,6 @@ import {
   incrementScanCount,
 } from '@/lib/storage';
 import { AnalysisInput, AnalysisResult, HistoryItem } from '@/types/analysis';
-import { ShieldCheck, History, Sparkles } from 'lucide-react';
 
 export default function Index() {
   const [isLoading, setIsLoading] = useState(false);
@@ -141,103 +140,31 @@ export default function Index() {
 
         {/* Show results */}
         {!isLoading && result && (
-          <div className="max-w-4xl mx-auto">
-            <ResultsDashboard result={result} onBack={handleBack} />
-          </div>
+          <ResultsDashboard result={result} onBack={handleBack} />
         )}
 
         {/* Show input form */}
         {!isLoading && !result && (
-          <div className="max-w-5xl mx-auto">
-            {/* Hero Section */}
-            <div className="text-center mb-12 animate-fade-in-up">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent text-accent-foreground text-sm font-medium mb-6">
-                <Sparkles className="w-4 h-4" />
-                AI-Powered Trust Analysis
-              </div>
-              <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
-                Know Before You Buy
-              </h1>
-              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-                Analyze real community sentiment to discover the truth about any product. 
-                Cut through promotional noise and make confident decisions.
-              </p>
-            </div>
-
-            {/* Main Grid */}
-            <div className="grid md:grid-cols-3 gap-8">
+          <div className="max-w-4xl mx-auto">
+            {/* Main Layout */}
+            <div className="grid lg:grid-cols-3 gap-6">
               {/* Form Section */}
-              <div className="md:col-span-2">
-                <div className="bg-card rounded-2xl p-6 md:p-8 card-shadow-lg animate-fade-in-up animation-delay-100">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <ShieldCheck className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h2 className="font-display text-xl font-semibold">Analyze a Product</h2>
-                      <p className="text-sm text-muted-foreground">Enter product details below</p>
-                    </div>
-                  </div>
-
-                  <AnalysisForm
-                    onSubmit={handleAnalysis}
-                    isLoading={isLoading}
-                    remainingScans={remainingScans}
-                    canPerformFree={canPerformFreeScan()}
-                    isAuthenticated={isAuthenticated}
-                    hasPremium={hasPremium}
-                  />
-                </div>
+              <div className="lg:col-span-2">
+                <AnalysisForm
+                  onSubmit={handleAnalysis}
+                  isLoading={isLoading}
+                  remainingScans={remainingScans}
+                  canPerformFree={canPerformFreeScan()}
+                  isAuthenticated={isAuthenticated}
+                  hasPremium={hasPremium}
+                />
               </div>
 
               {/* History Section */}
-              <div className="animate-fade-in-up animation-delay-200">
+              <div className="lg:col-span-1">
                 <div className="bg-card rounded-2xl p-6 card-shadow h-full">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-                      <History className="w-5 h-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <h3 className="font-display text-lg font-semibold">Recent Scans</h3>
-                      <p className="text-xs text-muted-foreground">Last 5 analyses</p>
-                    </div>
-                  </div>
-
                   <HistoryList items={history} onSelect={handleHistorySelect} />
                 </div>
-              </div>
-            </div>
-
-            {/* Features Grid */}
-            <div className="grid sm:grid-cols-3 gap-6 mt-12 animate-fade-in-up animation-delay-300">
-              <div className="text-center p-6">
-                <div className="w-12 h-12 rounded-2xl bg-trusted/10 text-trusted flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                </div>
-                <h3 className="font-display font-semibold mb-2">Community Signals</h3>
-                <p className="text-sm text-muted-foreground">Real feedback from forums, reviews, and discussions</p>
-              </div>
-
-              <div className="text-center p-6">
-                <div className="w-12 h-12 rounded-2xl bg-mixed/10 text-mixed flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h3 className="font-display font-semibold mb-2">Reality Gap Detection</h3>
-                <p className="text-sm text-muted-foreground">Compare marketing claims to actual experiences</p>
-              </div>
-
-              <div className="text-center p-6">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <h3 className="font-display font-semibold mb-2">Trust Score</h3>
-                <p className="text-sm text-muted-foreground">Clear 0-100 rating with detailed breakdown</p>
               </div>
             </div>
           </div>

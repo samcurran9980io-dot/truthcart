@@ -1,6 +1,5 @@
 import { CommunitySignal } from '@/types/analysis';
 import { cn } from '@/lib/utils';
-import { Quote } from 'lucide-react';
 
 interface CommunityQuoteProps {
   signal: CommunitySignal;
@@ -9,16 +8,22 @@ interface CommunityQuoteProps {
 
 const sentimentConfig = {
   positive: {
-    borderColor: 'border-l-trusted',
-    iconColor: 'text-trusted',
-  },
-  neutral: {
-    borderColor: 'border-l-muted-foreground',
-    iconColor: 'text-muted-foreground',
+    label: 'POSITIVE',
+    bgClass: 'bg-trusted/10',
+    textClass: 'text-trusted',
+    borderClass: 'border-l-trusted',
   },
   negative: {
-    borderColor: 'border-l-suspicious',
-    iconColor: 'text-suspicious',
+    label: 'NEGATIVE',
+    bgClass: 'bg-suspicious/10',
+    textClass: 'text-suspicious',
+    borderClass: 'border-l-suspicious',
+  },
+  neutral: {
+    label: 'MIXED',
+    bgClass: 'bg-mixed/10',
+    textClass: 'text-mixed',
+    borderClass: 'border-l-mixed',
   },
 };
 
@@ -28,18 +33,28 @@ export function CommunityQuote({ signal, delay = 0 }: CommunityQuoteProps) {
   return (
     <div 
       className={cn(
-        'p-4 bg-muted/50 rounded-lg border-l-4 animate-slide-in opacity-0',
-        config.borderColor
+        'border-l-4 pl-3 py-2 animate-slide-in opacity-0',
+        config.borderClass
       )}
-      style={{ animationDelay: `${delay}ms`, animationFillMode: 'forwards' }}
+      style={{ 
+        animationDelay: `${delay}ms`,
+        animationFillMode: 'forwards'
+      }}
     >
-      <div className="flex items-start gap-3">
-        <Quote className={cn('w-5 h-5 mt-0.5 flex-shrink-0', config.iconColor)} />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm text-foreground italic">"{signal.quote}"</p>
-          <p className="mt-2 text-xs text-muted-foreground">— {signal.source}</p>
-        </div>
+      <div className="flex items-center gap-2 mb-1">
+        <span className={cn(
+          'text-[10px] font-bold uppercase tracking-wider',
+          config.textClass
+        )}>
+          {config.label}
+        </span>
       </div>
+      <p className="text-sm text-foreground leading-relaxed">
+        "{signal.quote}"
+      </p>
+      <p className="text-xs text-muted-foreground mt-1 uppercase">
+        {signal.source}
+      </p>
     </div>
   );
 }
