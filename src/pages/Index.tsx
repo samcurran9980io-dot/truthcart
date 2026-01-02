@@ -4,6 +4,7 @@ import { AnalysisForm } from '@/components/AnalysisForm';
 import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { LoadingSteps } from '@/components/LoadingSteps';
 import { HistoryList } from '@/components/HistoryList';
+import { PremiumUpgradeModal } from '@/components/PremiumUpgradeModal';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,22 +19,35 @@ import {
 } from '@/lib/storage';
 import { AnalysisInput, AnalysisResult, HistoryItem } from '@/types/analysis';
 
+// Check if user has premium status
+const checkPremiumStatus = (): boolean => {
+  return localStorage.getItem('truthcart_premium') === 'true';
+};
+
 export default function Index() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [remainingScans, setRemainingScans] = useState(getRemainingScans());
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [hasPremium, setHasPremium] = useState(checkPremiumStatus());
 
   const { isAuthenticated, signOut, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
-  // Mock premium status (in production, check against actual subscription)
-  const hasPremium = false;
-
   useEffect(() => {
     setHistory(getHistory());
     setRemainingScans(getRemainingScans());
+    setHasPremium(checkPremiumStatus());
   }, []);
+
+  const handlePremiumSuccess = () => {
+    setHasPremium(true);
+    toast({
+      title: 'Premium activated!',
+      description: 'You now have access to Deep Research.',
+    });
+  };
 
   const handleAnalysis = async (input: AnalysisInput) => {
     // Check limits for free users
@@ -43,6 +57,12 @@ export default function Index() {
         description: 'Sign in to continue using TruthCart.',
         variant: 'destructive',
       });
+      return;
+    }
+
+    // Check premium for deep research
+    if (input.mode === 'deep' && !hasPremium) {
+      setShowUpgradeModal(true);
       return;
     }
 
@@ -118,6 +138,10 @@ export default function Index() {
     });
   };
 
+  const handleUpgradeClick = () => {
+    setShowUpgradeModal(true);
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -128,7 +152,12 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header isAuthenticated={isAuthenticated} onLogout={handleLogout} />
+      <Header 
+        isAuthenticated={isAuthenticated} 
+        onLogout={handleLogout} 
+        hasPremium={hasPremium}
+        onUpgradeClick={handleUpgradeClick}
+      />
 
       <main className="container mx-auto px-4 py-8 md:py-12">
         {/* Show loading state */}
@@ -157,6 +186,7 @@ export default function Index() {
                   canPerformFree={canPerformFreeScan()}
                   isAuthenticated={isAuthenticated}
                   hasPremium={hasPremium}
+                  onUpgradeClick={handleUpgradeClick}
                 />
               </div>
 
@@ -170,6 +200,13 @@ export default function Index() {
           </div>
         )}
       </main>
+
+      {/* Premium Upgrade Modal */}
+      <PremiumUpgradeModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        onSuccess={handlePremiumSuccess}
+      />
 
       {/* Footer */}
       <footer className="border-t border-border mt-auto">
