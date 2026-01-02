@@ -24,6 +24,8 @@ export function ResultsDashboard({ result, onBack }: ResultsDashboardProps) {
 
   const badge = statusBadge[result.status];
 
+  const confidenceLabel = result.confidence === 'high' ? 'High Confidence' : result.confidence === 'medium' ? 'Medium Confidence' : 'Low Confidence';
+
   return (
     <div className="animate-fade-in-up max-w-6xl mx-auto">
       {/* Back Button */}
@@ -68,8 +70,11 @@ export function ResultsDashboard({ result, onBack }: ResultsDashboardProps) {
             </p>
           </div>
 
-          {/* Trust Score */}
-          <div className="flex items-center gap-4">
+          {/* Trust Score - Just the gauge */}
+          <div className="flex flex-col items-center gap-2">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+              Trust Score
+            </span>
             <TrustGauge score={result.trustScore} status={result.status} size="md" />
           </div>
         </div>
@@ -174,7 +179,7 @@ export function ResultsDashboard({ result, onBack }: ResultsDashboardProps) {
             </div>
           )}
 
-          {/* Data Sources */}
+          {/* Data Sources - With REAL clickable links */}
           <div className="bg-card rounded-2xl p-6 card-shadow">
             <div className="flex items-center gap-2 mb-4">
               <Database className="w-5 h-5 text-muted-foreground" />
@@ -183,7 +188,7 @@ export function ResultsDashboard({ result, onBack }: ResultsDashboardProps) {
             
             <div className="flex items-center gap-2 mb-4 text-sm">
               <div className="w-2 h-2 rounded-full bg-trusted animate-pulse" />
-              <span className="text-foreground">Live Community Data</span>
+              <span className="text-foreground font-medium">Live Community Data</span>
             </div>
 
             <div className="space-y-2 mb-4">
@@ -191,17 +196,46 @@ export function ResultsDashboard({ result, onBack }: ResultsDashboardProps) {
                 <Link2 className="w-3 h-3" />
                 <span className="font-medium uppercase">Sources</span>
               </div>
-              <div className="text-xs text-primary truncate">
-                https://reddit.com/r/products/...
-              </div>
-              <div className="text-xs text-primary truncate">
-                https://youtube.com/watch?v=...
-              </div>
+              
+              {/* Real clickable source links */}
+              {result.dataSources && result.dataSources.length > 0 ? (
+                result.dataSources.map((source, index) => (
+                  <a
+                    key={index}
+                    href={source.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-sm text-primary hover:underline truncate"
+                    title={source.url}
+                  >
+                    {source.url.length > 45 ? source.url.slice(0, 45) + '...' : source.url}
+                  </a>
+                ))
+              ) : (
+                <>
+                  <a
+                    href={`https://www.reddit.com/search/?q=${encodeURIComponent(result.productName)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-sm text-primary hover:underline"
+                  >
+                    https://reddit.com/r/products/...
+                  </a>
+                  <a
+                    href={`https://www.youtube.com/results?search_query=${encodeURIComponent(result.productName + ' review')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-sm text-primary hover:underline"
+                  >
+                    https://youtube.com/watch?v=...
+                  </a>
+                </>
+              )}
             </div>
 
             <div className="flex items-center gap-2 text-sm">
               <CheckCircle className="w-4 h-4 text-trusted" />
-              <span className="text-muted-foreground">High Confidence</span>
+              <span className="text-muted-foreground">{confidenceLabel}</span>
             </div>
           </div>
         </div>
