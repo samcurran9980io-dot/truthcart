@@ -4,8 +4,7 @@ import { TrustGauge } from './TrustGauge';
 import { BreakdownBar } from './BreakdownBar';
 import { CommunityQuote } from './CommunityQuote';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, ExternalLink, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ExternalLink, AlertTriangle, CheckCircle, Sparkles, ThumbsUp, ThumbsDown, Database, Link2, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ResultsDashboardProps {
@@ -14,157 +13,228 @@ interface ResultsDashboardProps {
 }
 
 export function ResultsDashboard({ result, onBack }: ResultsDashboardProps) {
-  const [activeTab, setActiveTab] = useState('overview');
   const isPremium = result.mode === 'deep';
+  const [feedbackGiven, setFeedbackGiven] = useState<'up' | 'down' | null>(null);
+
+  const statusBadge = {
+    trusted: { label: 'TRUSTED', bgClass: 'bg-trusted/10', textClass: 'text-trusted', borderClass: 'border-trusted' },
+    mixed: { label: 'MIXED', bgClass: 'bg-mixed/10', textClass: 'text-mixed', borderClass: 'border-mixed' },
+    suspicious: { label: 'SUSPICIOUS', bgClass: 'bg-suspicious/10', textClass: 'text-suspicious', borderClass: 'border-suspicious' },
+  };
+
+  const badge = statusBadge[result.status];
 
   return (
-    <div className="animate-fade-in-up">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={onBack}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <div className="flex-1 min-w-0">
-          <h2 className="font-display text-xl font-bold truncate">{result.productName}</h2>
-          {result.brand && (
-            <p className="text-sm text-muted-foreground">{result.brand}</p>
-          )}
-        </div>
-        <a
-          href={result.productUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ExternalLink className="w-5 h-5" />
-        </a>
-      </div>
+    <div className="animate-fade-in-up max-w-6xl mx-auto">
+      {/* Back Button */}
+      <button
+        onClick={onBack}
+        className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-6"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span className="text-sm font-medium">Analyze another product</span>
+      </button>
 
-      {/* Mobile: Tabs */}
-      <div className="md:hidden">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="w-full mb-4">
-            <TabsTrigger value="overview" className="flex-1">Overview</TabsTrigger>
-            <TabsTrigger value="analysis" className="flex-1">Analysis</TabsTrigger>
-            {isPremium && (
-              <TabsTrigger value="community" className="flex-1">Community</TabsTrigger>
+      {/* Main Card */}
+      <div className="bg-card rounded-2xl p-6 md:p-8 card-shadow-lg mb-6">
+        {/* Product Header */}
+        <div className="flex flex-col md:flex-row md:items-start gap-6 mb-6">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="font-display text-xl md:text-2xl font-bold">{result.productName}</h1>
+              <span className={cn(
+                'px-2 py-0.5 rounded text-xs font-bold uppercase border',
+                badge.bgClass, badge.textClass, badge.borderClass
+              )}>
+                {badge.label}
+              </span>
+            </div>
+            {result.brand && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                <span>{result.brand}</span>
+                <span>·</span>
+                <a
+                  href={result.productUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  View Product <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
             )}
-          </TabsList>
+            <p className="text-xs text-muted-foreground">
+              Analyzed {new Date(result.analyzedAt).toLocaleDateString()}
+            </p>
+          </div>
 
-          <TabsContent value="overview" className="space-y-6">
-            <OverviewSection result={result} />
-          </TabsContent>
+          {/* Trust Score */}
+          <div className="flex items-center gap-4">
+            <TrustGauge score={result.trustScore} status={result.status} size="md" />
+          </div>
+        </div>
 
-          <TabsContent value="analysis" className="space-y-6">
-            <AnalysisSection result={result} />
-          </TabsContent>
-
-          {isPremium && (
-            <TabsContent value="community" className="space-y-6">
-              <CommunitySection result={result} />
-            </TabsContent>
-          )}
-        </Tabs>
+        {/* Verdict Box */}
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-foreground mb-1">VERDICT</h3>
+              <p className="text-sm text-muted-foreground">{result.verdict}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Desktop: Grid */}
-      <div className="hidden md:grid md:grid-cols-2 gap-6">
+      {/* Content Grid */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Left Column */}
         <div className="space-y-6">
+          {/* Score Breakdown */}
           <div className="bg-card rounded-2xl p-6 card-shadow">
-            <OverviewSection result={result} />
+            <div className="flex items-center gap-2 mb-5">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <h3 className="font-display text-lg font-semibold">Score Breakdown</h3>
+            </div>
+            <div className="space-y-4">
+              {result.breakdown.map((item, index) => (
+                <BreakdownBar
+                  key={item.label}
+                  label={item.label}
+                  score={item.score}
+                  description={item.description}
+                  delay={index * 100}
+                />
+              ))}
+            </div>
           </div>
+
+          {/* Detected Reality Gaps */}
           {isPremium && result.riskFactors && result.riskFactors.length > 0 && (
             <div className="bg-card rounded-2xl p-6 card-shadow">
-              <RiskSection riskFactors={result.riskFactors} />
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle className="w-5 h-5 text-mixed" />
+                <h3 className="font-display text-lg font-semibold">Detected Reality Gaps</h3>
+              </div>
+              <div className="space-y-2">
+                {result.riskFactors.map((risk, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-3 p-3 bg-suspicious/5 border border-suspicious/20 rounded-lg animate-slide-in opacity-0"
+                    style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
+                  >
+                    <span className="text-suspicious text-lg">✕</span>
+                    <span className="text-sm text-foreground">{risk}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
+
+        {/* Right Column */}
         <div className="space-y-6">
-          <div className="bg-card rounded-2xl p-6 card-shadow">
-            <AnalysisSection result={result} />
-          </div>
+          {/* Analysis Summary (Premium) */}
           {isPremium && (
-            <div className="bg-card rounded-2xl p-6 card-shadow">
-              <CommunitySection result={result} />
+            <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6">
+              <h3 className="font-display text-sm font-semibold text-primary uppercase tracking-wider mb-3">
+                Analysis Summary
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {result.verdict}
+              </p>
             </div>
           )}
+
+          {/* Voice of Customer */}
+          {isPremium && result.communitySignals && result.communitySignals.length > 0 && (
+            <div className="bg-card rounded-2xl p-6 card-shadow">
+              <div className="flex items-center gap-2 mb-4">
+                <Shield className="w-5 h-5 text-primary" />
+                <h3 className="font-display text-lg font-semibold">Voice of Customer</h3>
+              </div>
+              
+              {/* Main Issue */}
+              <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground mb-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  MAIN ISSUE
+                </div>
+                <p className="text-sm text-foreground">
+                  {result.communitySignals[0]?.quote || 'Community feedback analysis in progress.'}
+                </p>
+              </div>
+
+              {/* Community Quotes */}
+              <div className="space-y-3">
+                {result.communitySignals.slice(0, 3).map((signal, index) => (
+                  <CommunityQuote key={index} signal={signal} delay={index * 100} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Data Sources */}
+          <div className="bg-card rounded-2xl p-6 card-shadow">
+            <div className="flex items-center gap-2 mb-4">
+              <Database className="w-5 h-5 text-muted-foreground" />
+              <h3 className="font-display text-lg font-semibold">Data Sources</h3>
+            </div>
+            
+            <div className="flex items-center gap-2 mb-4 text-sm">
+              <div className="w-2 h-2 rounded-full bg-trusted animate-pulse" />
+              <span className="text-foreground">Live Community Data</span>
+            </div>
+
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Link2 className="w-3 h-3" />
+                <span className="font-medium uppercase">Sources</span>
+              </div>
+              <div className="text-xs text-primary truncate">
+                https://reddit.com/r/products/...
+              </div>
+              <div className="text-xs text-primary truncate">
+                https://youtube.com/watch?v=...
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm">
+              <CheckCircle className="w-4 h-4 text-trusted" />
+              <span className="text-muted-foreground">High Confidence</span>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
 
-function OverviewSection({ result }: { result: AnalysisResult }) {
-  return (
-    <div className="text-center space-y-6">
-      <TrustGauge score={result.trustScore} status={result.status} size="lg" />
-      <div className="space-y-2">
-        <h3 className="font-display text-lg font-semibold">Verdict</h3>
-        <p className="text-muted-foreground">{result.verdict}</p>
-      </div>
-      <div className="text-xs text-muted-foreground">
-        Analyzed {new Date(result.analyzedAt).toLocaleDateString()} ·{' '}
-        <span className="capitalize">{result.mode} Scan</span>
-      </div>
-    </div>
-  );
-}
-
-function AnalysisSection({ result }: { result: AnalysisResult }) {
-  return (
-    <div className="space-y-5">
-      <h3 className="font-display text-lg font-semibold">Signal Breakdown</h3>
-      {result.breakdown.map((item, index) => (
-        <BreakdownBar
-          key={item.label}
-          label={item.label}
-          score={item.score}
-          description={item.description}
-          delay={index * 100}
-        />
-      ))}
-    </div>
-  );
-}
-
-function CommunitySection({ result }: { result: AnalysisResult }) {
-  if (!result.communitySignals || result.communitySignals.length === 0) {
-    return (
-      <div className="text-center py-6 text-muted-foreground">
-        <p>No community signals available</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <h3 className="font-display text-lg font-semibold">Community Signals</h3>
-      {result.communitySignals.map((signal, index) => (
-        <CommunityQuote key={index} signal={signal} delay={index * 100} />
-      ))}
-    </div>
-  );
-}
-
-function RiskSection({ riskFactors }: { riskFactors: string[] }) {
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <AlertTriangle className="w-5 h-5 text-mixed" />
-        <h3 className="font-display text-lg font-semibold">Risk Factors</h3>
-      </div>
-      <ul className="space-y-2">
-        {riskFactors.map((risk, index) => (
-          <li
-            key={index}
-            className="flex items-start gap-2 text-sm text-muted-foreground animate-slide-in opacity-0"
-            style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'forwards' }}
+      {/* Feedback Section */}
+      <div className="mt-8 bg-card rounded-2xl p-6 card-shadow text-center">
+        <p className="text-sm text-muted-foreground mb-4">Was this analysis helpful?</p>
+        <div className="flex items-center justify-center gap-4">
+          <button
+            onClick={() => setFeedbackGiven('up')}
+            className={cn(
+              'w-10 h-10 rounded-full border transition-all duration-200 flex items-center justify-center',
+              feedbackGiven === 'up'
+                ? 'bg-trusted text-white border-trusted'
+                : 'border-border text-muted-foreground hover:border-trusted hover:text-trusted'
+            )}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-mixed mt-2 flex-shrink-0" />
-            {risk}
-          </li>
-        ))}
-      </ul>
+            <ThumbsUp className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setFeedbackGiven('down')}
+            className={cn(
+              'w-10 h-10 rounded-full border transition-all duration-200 flex items-center justify-center',
+              feedbackGiven === 'down'
+                ? 'bg-suspicious text-white border-suspicious'
+                : 'border-border text-muted-foreground hover:border-suspicious hover:text-suspicious'
+            )}
+          >
+            <ThumbsDown className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

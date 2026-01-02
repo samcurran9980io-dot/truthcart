@@ -1,7 +1,7 @@
 import { HistoryItem } from '@/types/analysis';
 import { cn } from '@/lib/utils';
 import { Clock, ArrowRight } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 
 interface HistoryListProps {
   items: HistoryItem[];
@@ -12,6 +12,12 @@ const statusColors = {
   trusted: 'text-trusted',
   mixed: 'text-mixed',
   suspicious: 'text-suspicious',
+};
+
+const statusLabels = {
+  trusted: 'Trusted',
+  mixed: 'Mixed',
+  suspicious: 'Suspicious',
 };
 
 export function HistoryList({ items, onSelect }: HistoryListProps) {
@@ -26,26 +32,27 @@ export function HistoryList({ items, onSelect }: HistoryListProps) {
 
   return (
     <div className="space-y-2">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider mb-3">
+        <Clock className="w-3.5 h-3.5" />
+        Recent Analyses
+      </div>
       {items.map((item) => (
         <button
           key={item.id}
           onClick={() => onSelect(item.id)}
-          className="w-full flex items-center justify-between p-3 rounded-lg bg-card hover:bg-accent/50 transition-colors duration-200 text-left group"
+          className="w-full flex items-center justify-between p-4 rounded-xl bg-background border border-border hover:border-primary/50 transition-all duration-200 text-left group"
         >
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-foreground truncate">{item.productName}</p>
-            <p className="text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(item.analyzedAt), { addSuffix: true })}
+            <p className="font-medium text-foreground truncate text-sm">{item.productName}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {format(new Date(item.analyzedAt), 'dd/MM/yyyy')}
               {' · '}
-              <span className="capitalize">{item.mode} Scan</span>
+              <span className={cn('font-medium', statusColors[item.status])}>
+                {statusLabels[item.status]} ({item.trustScore})
+              </span>
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className={cn('font-bold text-lg', statusColors[item.status])}>
-              {item.trustScore}
-            </span>
-            <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
+          <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-2" />
         </button>
       ))}
     </div>

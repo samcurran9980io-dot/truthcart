@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { TrustStatus } from '@/types/analysis';
 import { cn } from '@/lib/utils';
+import { CheckCircle } from 'lucide-react';
 
 interface TrustGaugeProps {
   score: number;
@@ -12,18 +13,21 @@ interface TrustGaugeProps {
 const statusConfig = {
   trusted: {
     label: 'Trusted',
+    sublabel: 'w/ Caveats',
     colorClass: 'text-trusted',
     strokeClass: 'stroke-trusted',
     bgClass: 'bg-trusted/10',
   },
   mixed: {
     label: 'Mixed',
+    sublabel: 'Reviews',
     colorClass: 'text-mixed',
     strokeClass: 'stroke-mixed',
     bgClass: 'bg-mixed/10',
   },
   suspicious: {
     label: 'Suspicious',
+    sublabel: 'Signals',
     colorClass: 'text-suspicious',
     strokeClass: 'stroke-suspicious',
     bgClass: 'bg-suspicious/10',
@@ -31,9 +35,9 @@ const statusConfig = {
 };
 
 const sizeConfig = {
-  sm: { width: 100, strokeWidth: 8, fontSize: 'text-2xl', labelSize: 'text-xs' },
-  md: { width: 160, strokeWidth: 10, fontSize: 'text-4xl', labelSize: 'text-sm' },
-  lg: { width: 220, strokeWidth: 12, fontSize: 'text-5xl', labelSize: 'text-base' },
+  sm: { width: 80, strokeWidth: 6, fontSize: 'text-xl', labelSize: 'text-xs' },
+  md: { width: 120, strokeWidth: 8, fontSize: 'text-3xl', labelSize: 'text-xs' },
+  lg: { width: 160, strokeWidth: 10, fontSize: 'text-4xl', labelSize: 'text-sm' },
 };
 
 export function TrustGauge({ score, status, size = 'md', animated = true }: TrustGaugeProps) {
@@ -52,7 +56,6 @@ export function TrustGauge({ score, status, size = 'md', animated = true }: Trus
       return;
     }
     
-    let start = 0;
     const duration = 1500;
     const startTime = performance.now();
     
@@ -75,7 +78,12 @@ export function TrustGauge({ score, status, size = 'md', animated = true }: Trus
   }, [score, animated]);
   
   return (
-    <div className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-2">
+      {/* Trust Score Label */}
+      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+        Trust Score
+      </span>
+      
       <div className="relative" style={{ width: sizeConf.width, height: sizeConf.width }}>
         <svg
           className="transform -rotate-90"
@@ -104,7 +112,7 @@ export function TrustGauge({ score, status, size = 'md', animated = true }: Trus
             strokeDashoffset={offset}
             className={cn(config.strokeClass, 'transition-all duration-300')}
             style={{
-              filter: 'drop-shadow(0 0 8px currentColor)',
+              filter: 'drop-shadow(0 0 6px currentColor)',
             }}
           />
         </svg>
@@ -114,20 +122,15 @@ export function TrustGauge({ score, status, size = 'md', animated = true }: Trus
           <span className={cn('font-display font-bold', sizeConf.fontSize, config.colorClass)}>
             {displayScore}
           </span>
-          <span className={cn('text-muted-foreground', sizeConf.labelSize)}>
-            / 100
-          </span>
         </div>
       </div>
       
-      {/* Status badge */}
-      <div className={cn(
-        'px-4 py-1.5 rounded-full font-medium',
-        config.bgClass,
-        config.colorClass,
-        sizeConf.labelSize
-      )}>
-        {config.label}
+      {/* Status with icon */}
+      <div className="flex items-center gap-1.5 text-trusted">
+        <CheckCircle className="w-4 h-4" />
+        <span className="text-sm font-medium">
+          {config.label} {config.sublabel}
+        </span>
       </div>
     </div>
   );
