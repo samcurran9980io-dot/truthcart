@@ -13,6 +13,7 @@ interface AnalysisFormProps {
   canPerformFree: boolean;
   isAuthenticated: boolean;
   hasPremium: boolean;
+  onUpgradeClick?: () => void;
 }
 
 export function AnalysisForm({
@@ -22,6 +23,7 @@ export function AnalysisForm({
   canPerformFree,
   isAuthenticated,
   hasPremium,
+  onUpgradeClick,
 }: AnalysisFormProps) {
   const [productName, setProductName] = useState('');
   const [brand, setBrand] = useState('');
@@ -210,10 +212,17 @@ export function AnalysisForm({
         )}
 
         {mode === 'deep' && isAuthenticated && !hasPremium && (
-          <div className="flex items-center gap-2 text-sm text-mixed bg-mixed/10 p-3 rounded-lg">
-            <Crown className="w-4 h-4" />
-            <span>Upgrade to Premium for Deep Research</span>
-          </div>
+          <button
+            type="button"
+            onClick={onUpgradeClick}
+            className="w-full flex items-center justify-between text-sm text-mixed bg-mixed/10 p-3 rounded-lg hover:bg-mixed/20 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Crown className="w-4 h-4" />
+              <span>Upgrade to Premium for Deep Research</span>
+            </div>
+            <span className="text-xs font-medium">$9.99/mo →</span>
+          </button>
         )}
 
         <Button
