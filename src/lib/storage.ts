@@ -1,10 +1,103 @@
 import { AnalysisResult, HistoryItem } from '@/types/analysis';
+import { type UserPlan, type PlanId, CREDIT_COSTS, getPlanById } from '@/lib/plans';
 
 const HISTORY_KEY = 'truthcart_history';
-const USAGE_KEY = 'truthcart_usage';
+const USER_PLAN_KEY = 'truthcart_user_plan';
 const MAX_HISTORY = 5;
-const MAX_FREE_SCANS = 10;
 
+// Get default plan for new users
+function getDefaultPlan(): UserPlan {
+  const nextMonth = new Date();
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  
+  return {
+    planId: 'free',
+    billingCycle: 'monthly',
+    creditsUsed: 0,
+    creditsTotal: 10,
+    renewsAt: nextMonth.toISOString(),
+  };
+}
+
+export function getUserPlan(): UserPlan {
+  try {
+    const data = localStorage.getItem(USER_PLAN_KEY);
+    if (!data) return getDefaultPlan();
+    
+    const plan = JSON.parse(data) as UserPlan;
+    
+    // Check if credits need to reset (for paid plans)
+    if (plan.planId !== 'free' && new Date(plan.renewsAt) < new Date()) {
+      const planDef = getPlanById(plan.planId);
+      const nextMonth = new Date();
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
+      
+      return {
+        ...plan,
+        creditsUsed: 0,
+        creditsTotal: planDef?.credits ?? plan.creditsTotal,
+        renewsAt: nextMonth.toISOString(),
+      };
+    }
+    
+    return plan;
+  } catch {
+    return getDefaultPlan();
+  }
+}
+
+export function saveUserPlan(plan: UserPlan): void {
+  localStorage.setItem(USER_PLAN_KEY, JSON.stringify(plan));
+}
+
+export function upgradePlan(planId: PlanId, billingCycle: 'monthly' | 'yearly'): UserPlan {
+  const planDef = getPlanById(planId);
+  if (!planDef) throw new Error('Invalid plan');
+  
+  const nextMonth = new Date();
+  nextMonth.setMonth(nextMonth.getMonth() + (billingCycle === 'yearly' ? 12 : 1));
+  
+  const newPlan: UserPlan = {
+    planId,
+    billingCycle,
+    creditsUsed: 0,
+    creditsTotal: planDef.credits,
+    renewsAt: nextMonth.toISOString(),
+  };
+  
+  saveUserPlan(newPlan);
+  return newPlan;
+}
+
+export function useCredits(mode: 'fast' | 'deep'): boolean {
+  const plan = getUserPlan();
+  const cost = mode === 'fast' ? CREDIT_COSTS.quickScan : CREDIT_COSTS.deepResearch;
+  const remaining = plan.creditsTotal - plan.creditsUsed;
+  
+  if (remaining < cost) return false;
+  
+  const updatedPlan = {
+    ...plan,
+    creditsUsed: plan.creditsUsed + cost,
+  };
+  
+  saveUserPlan(updatedPlan);
+  return true;
+}
+
+export function canPerformScan(mode: 'fast' | 'deep'): boolean {
+  const plan = getUserPlan();
+  const cost = mode === 'fast' ? CREDIT_COSTS.quickScan : CREDIT_COSTS.deepResearch;
+  const remaining = plan.creditsTotal - plan.creditsUsed;
+  return remaining >= cost;
+}
+
+export function getCreditsRemaining(): number {
+  const plan = getUserPlan();
+  return Math.max(0, plan.creditsTotal - plan.creditsUsed);
+}
+
+// History functions
 export function getHistory(): HistoryItem[] {
   try {
     const data = localStorage.getItem(HISTORY_KEY);
@@ -26,7 +119,6 @@ export function saveToHistory(result: AnalysisResult): void {
     analyzedAt: result.analyzedAt,
   };
   
-  // Add to beginning, remove duplicates, limit to MAX_HISTORY
   const filtered = history.filter(item => item.id !== result.id);
   const updated = [historyItem, ...filtered].slice(0, MAX_HISTORY);
   
@@ -46,46 +138,19 @@ export function saveFullResult(result: AnalysisResult): void {
   localStorage.setItem(`truthcart_result_${result.id}`, JSON.stringify(result));
 }
 
-export function getScanCount(): number {
-  try {
-    const data = localStorage.getItem(USAGE_KEY);
-    if (!data) return 0;
-    
-    const { count, date } = JSON.parse(data);
-    const today = new Date().toDateString();
-    
-    // Reset count if it's a new day
-    if (date !== today) {
-      return 0;
-    }
-    
-    return count;
-  } catch {
-    return 0;
-  }
+export function clearHistory(): void {
+  localStorage.removeItem(HISTORY_KEY);
 }
 
-export function incrementScanCount(): number {
-  const today = new Date().toDateString();
-  const currentCount = getScanCount();
-  const newCount = currentCount + 1;
-  
-  localStorage.setItem(USAGE_KEY, JSON.stringify({
-    count: newCount,
-    date: today,
-  }));
-  
-  return newCount;
+// Legacy compatibility
+export function getRemainingScans(): number {
+  return getCreditsRemaining();
 }
 
 export function canPerformFreeScan(): boolean {
-  return getScanCount() < MAX_FREE_SCANS;
+  return canPerformScan('fast');
 }
 
-export function getRemainingScans(): number {
-  return Math.max(0, MAX_FREE_SCANS - getScanCount());
-}
-
-export function clearHistory(): void {
-  localStorage.removeItem(HISTORY_KEY);
+export function incrementScanCount(): void {
+  useCredits('fast');
 }

@@ -4,7 +4,8 @@ import { AnalysisForm } from '@/components/AnalysisForm';
 import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { LoadingSteps } from '@/components/LoadingSteps';
 import { HistoryList } from '@/components/HistoryList';
-import { PremiumUpgradeModal } from '@/components/PremiumUpgradeModal';
+import { CreditDisplay } from '@/components/CreditDisplay';
+import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,61 +14,54 @@ import {
   saveToHistory,
   getFullResult,
   saveFullResult,
-  canPerformFreeScan,
-  getRemainingScans,
-  incrementScanCount,
+  getUserPlan,
+  useCredits,
+  canPerformScan,
 } from '@/lib/storage';
+import { type UserPlan, shouldShowWarning, CREDIT_COSTS } from '@/lib/plans';
 import { AnalysisInput, AnalysisResult, HistoryItem } from '@/types/analysis';
-
-// Check if user has premium status
-const checkPremiumStatus = (): boolean => {
-  return localStorage.getItem('truthcart_premium') === 'true';
-};
 
 export default function Index() {
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [remainingScans, setRemainingScans] = useState(getRemainingScans());
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [hasPremium, setHasPremium] = useState(checkPremiumStatus());
+  const [userPlan, setUserPlan] = useState<UserPlan>(getUserPlan());
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState<'no-credits' | 'deep-research-locked' | 'limit-reached' | null>(null);
 
   const { isAuthenticated, signOut, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     setHistory(getHistory());
-    setRemainingScans(getRemainingScans());
-    setHasPremium(checkPremiumStatus());
+    setUserPlan(getUserPlan());
   }, []);
 
-  const handlePremiumSuccess = () => {
-    setHasPremium(true);
-    toast({
-      title: 'Premium activated!',
-      description: 'You now have access to Deep Research.',
-    });
+  const refreshPlan = () => {
+    setUserPlan(getUserPlan());
   };
 
   const handleAnalysis = async (input: AnalysisInput) => {
-    // Check limits for free users
-    if (!isAuthenticated && input.mode === 'fast' && !canPerformFreeScan()) {
-      toast({
-        title: 'Scan limit reached',
-        description: 'Sign in to continue using TruthCart.',
-        variant: 'destructive',
-      });
+    // Check if user can perform the scan
+    if (!canPerformScan(input.mode)) {
+      if (userPlan.planId === 'free' && userPlan.creditsUsed >= userPlan.creditsTotal) {
+        setShowUpgradePrompt('limit-reached');
+      } else if (input.mode === 'deep' && userPlan.planId === 'free') {
+        setShowUpgradePrompt('deep-research-locked');
+      } else {
+        setShowUpgradePrompt('no-credits');
+      }
       return;
     }
 
-    // Check premium for deep research
-    if (input.mode === 'deep' && !hasPremium) {
-      setShowUpgradeModal(true);
+    // Deep research requires paid plan
+    if (input.mode === 'deep' && userPlan.planId === 'free') {
+      setShowUpgradePrompt('deep-research-locked');
       return;
     }
 
     setIsLoading(true);
     setResult(null);
+    setShowUpgradePrompt(null);
 
     try {
       const { data, error } = await supabase.functions.invoke('analyze-product', {
@@ -84,23 +78,35 @@ export default function Index() {
 
       const analysisResult = data as AnalysisResult;
 
+      // Use credits
+      const success = useCredits(input.mode);
+      if (!success) {
+        throw new Error('Failed to deduct credits');
+      }
+
       // Save result
       saveFullResult(analysisResult);
       saveToHistory(analysisResult);
       setHistory(getHistory());
-
-      // Increment usage for free users
-      if (!isAuthenticated) {
-        incrementScanCount();
-        setRemainingScans(getRemainingScans());
-      }
+      refreshPlan();
 
       setResult(analysisResult);
 
+      const creditsUsed = input.mode === 'fast' ? CREDIT_COSTS.quickScan : CREDIT_COSTS.deepResearch;
       toast({
         title: 'Analysis complete',
-        description: `Trust score: ${analysisResult.trustScore}/100`,
+        description: `Trust score: ${analysisResult.trustScore}/100 (${creditsUsed} credit${creditsUsed > 1 ? 's' : ''} used)`,
       });
+
+      // Show warning if low on credits
+      const updatedPlan = getUserPlan();
+      if (shouldShowWarning(updatedPlan)) {
+        toast({
+          title: 'Credits running low',
+          description: `You have ${updatedPlan.creditsTotal - updatedPlan.creditsUsed} credits remaining.`,
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
       console.error('Analysis error:', error);
       toast({
@@ -128,6 +134,7 @@ export default function Index() {
 
   const handleBack = () => {
     setResult(null);
+    setShowUpgradePrompt(null);
   };
 
   const handleLogout = async () => {
@@ -138,10 +145,6 @@ export default function Index() {
     });
   };
 
-  const handleUpgradeClick = () => {
-    setShowUpgradeModal(true);
-  };
-
   if (authLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -150,13 +153,15 @@ export default function Index() {
     );
   }
 
+  const remainingCredits = userPlan.creditsTotal - userPlan.creditsUsed;
+  const hasPremium = userPlan.planId !== 'free';
+
   return (
     <div className="min-h-screen bg-background">
       <Header 
         isAuthenticated={isAuthenticated} 
         onLogout={handleLogout} 
-        hasPremium={hasPremium}
-        onUpgradeClick={handleUpgradeClick}
+        userPlan={userPlan}
       />
 
       <main className="container mx-auto px-4 py-8 md:py-12">
@@ -174,20 +179,35 @@ export default function Index() {
 
         {/* Show input form */}
         {!isLoading && !result && (
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto">
+            {/* Upgrade Prompt */}
+            {showUpgradePrompt && (
+              <div className="mb-6">
+                <UpgradePrompt 
+                  reason={showUpgradePrompt} 
+                  currentPlan={userPlan.planId} 
+                />
+              </div>
+            )}
+
             {/* Main Layout */}
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid lg:grid-cols-4 gap-6">
               {/* Form Section */}
               <div className="lg:col-span-2">
                 <AnalysisForm
                   onSubmit={handleAnalysis}
                   isLoading={isLoading}
-                  remainingScans={remainingScans}
-                  canPerformFree={canPerformFreeScan()}
+                  remainingScans={remainingCredits}
+                  canPerformFree={canPerformScan('fast')}
                   isAuthenticated={isAuthenticated}
                   hasPremium={hasPremium}
-                  onUpgradeClick={handleUpgradeClick}
+                  onUpgradeClick={() => setShowUpgradePrompt('deep-research-locked')}
                 />
+              </div>
+
+              {/* Credits Section */}
+              <div className="lg:col-span-1">
+                <CreditDisplay userPlan={userPlan} variant="full" />
               </div>
 
               {/* History Section */}
@@ -200,13 +220,6 @@ export default function Index() {
           </div>
         )}
       </main>
-
-      {/* Premium Upgrade Modal */}
-      <PremiumUpgradeModal
-        open={showUpgradeModal}
-        onOpenChange={setShowUpgradeModal}
-        onSuccess={handlePremiumSuccess}
-      />
 
       {/* Footer */}
       <footer className="border-t border-border mt-auto">
