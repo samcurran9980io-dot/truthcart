@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { TrustStatus } from '@/types/analysis';
 import { cn } from '@/lib/utils';
 
@@ -13,21 +14,24 @@ const statusConfig = {
   trusted: {
     colorClass: 'text-trusted',
     strokeClass: 'stroke-trusted',
+    bgClass: 'bg-trusted/10',
   },
   mixed: {
     colorClass: 'text-mixed',
     strokeClass: 'stroke-mixed',
+    bgClass: 'bg-mixed/10',
   },
   suspicious: {
     colorClass: 'text-suspicious',
     strokeClass: 'stroke-suspicious',
+    bgClass: 'bg-suspicious/10',
   },
 };
 
 const sizeConfig = {
-  sm: { width: 80, strokeWidth: 6, fontSize: 'text-2xl' },
-  md: { width: 100, strokeWidth: 7, fontSize: 'text-3xl' },
-  lg: { width: 120, strokeWidth: 8, fontSize: 'text-4xl' },
+  sm: { width: 80, strokeWidth: 5, fontSize: 'text-2xl', labelSize: 'text-[8px]' },
+  md: { width: 120, strokeWidth: 6, fontSize: 'text-4xl', labelSize: 'text-[10px]' },
+  lg: { width: 160, strokeWidth: 7, fontSize: 'text-5xl', labelSize: 'text-xs' },
 };
 
 export function TrustGauge({ score, status, size = 'md', animated = true }: TrustGaugeProps) {
@@ -35,7 +39,7 @@ export function TrustGauge({ score, status, size = 'md', animated = true }: Trus
   const config = statusConfig[status];
   const sizeConf = sizeConfig[size];
   
-  const radius = (sizeConf.width - sizeConf.strokeWidth) / 2;
+  const radius = (sizeConf.width - sizeConf.strokeWidth * 2) / 2;
   const circumference = 2 * Math.PI * radius;
   const progress = (displayScore / 100) * circumference;
   const offset = circumference - progress;
@@ -53,7 +57,7 @@ export function TrustGauge({ score, status, size = 'md', animated = true }: Trus
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Easing function
+      // Easing function - ease out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = Math.round(eased * score);
       
@@ -68,7 +72,24 @@ export function TrustGauge({ score, status, size = 'md', animated = true }: Trus
   }, [score, animated]);
   
   return (
-    <div className="relative" style={{ width: sizeConf.width, height: sizeConf.width }}>
+    <motion.div 
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+      className="relative" 
+      style={{ width: sizeConf.width, height: sizeConf.width }}
+    >
+      {/* Glow effect */}
+      <div 
+        className={cn(
+          "absolute inset-0 rounded-full blur-xl opacity-30 transition-opacity duration-500",
+          config.bgClass
+        )}
+        style={{ 
+          transform: 'scale(1.1)',
+        }}
+      />
+      
       <svg
         className="transform -rotate-90"
         width={sizeConf.width}
@@ -82,10 +103,10 @@ export function TrustGauge({ score, status, size = 'md', animated = true }: Trus
           fill="none"
           stroke="currentColor"
           strokeWidth={sizeConf.strokeWidth}
-          className="text-muted"
+          className="text-muted/50"
         />
         {/* Progress circle */}
-        <circle
+        <motion.circle
           cx={sizeConf.width / 2}
           cy={sizeConf.width / 2}
           r={radius}
@@ -94,16 +115,24 @@ export function TrustGauge({ score, status, size = 'md', animated = true }: Trus
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          className={cn(config.strokeClass, 'transition-all duration-300')}
+          className={cn(config.strokeClass, 'drop-shadow-sm')}
+          initial={{ strokeDashoffset: circumference }}
+          animate={{ strokeDashoffset: offset }}
+          transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1] }}
         />
       </svg>
       
-      {/* Center score - just the number */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className={cn('font-display font-bold', sizeConf.fontSize, config.colorClass)}>
+      {/* Center score */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <motion.span 
+          className={cn('font-bold tracking-tight', sizeConf.fontSize, config.colorClass)}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+        >
           {displayScore}
-        </span>
+        </motion.span>
       </div>
-    </div>
+    </motion.div>
   );
 }

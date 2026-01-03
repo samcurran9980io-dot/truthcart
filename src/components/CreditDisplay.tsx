@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Zap, AlertTriangle, Crown } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Zap, AlertTriangle, Crown, ChevronRight } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,11 +28,15 @@ export function CreditDisplay({ userPlan, variant = 'compact', showUpgradeButton
 
   if (variant === 'compact') {
     return (
-      <div className="flex items-center gap-2">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex items-center gap-2"
+      >
         <div className={cn(
-          "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium",
+          "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium",
           showWarning 
-            ? "bg-destructive/10 text-destructive" 
+            ? "bg-mixed/10 text-mixed" 
             : "bg-primary/10 text-primary"
         )}>
           {showWarning ? (
@@ -47,66 +52,84 @@ export function CreditDisplay({ userPlan, variant = 'compact', showUpgradeButton
             Pro
           </Badge>
         )}
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="bg-card rounded-xl p-5 border border-border">
-      <div className="flex items-center justify-between mb-4">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+      className="bg-card rounded-3xl p-6 shadow-premium border border-border/50"
+    >
+      <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
           <h3 className="font-semibold text-foreground">Your Credits</h3>
           {plan && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="text-xs bg-secondary/50">
               {plan.name}
             </Badge>
           )}
         </div>
         {showWarning && (
-          <Badge variant="destructive" className="text-xs">
+          <Badge variant="destructive" className="text-xs bg-mixed/10 text-mixed border-mixed/20">
             <AlertTriangle className="w-3 h-3 mr-1" />
-            Running Low
+            Low
           </Badge>
         )}
       </div>
 
-      <div className="mb-4">
-        <div className="flex items-baseline justify-between mb-2">
-          <span className="text-3xl font-bold text-foreground">{remaining}</span>
-          <span className="text-sm text-muted-foreground">of {userPlan.creditsTotal} remaining</span>
+      <div className="mb-5">
+        <div className="flex items-baseline justify-between mb-3">
+          <span className="text-4xl font-bold text-foreground">{remaining}</span>
+          <span className="text-sm text-muted-foreground">of {userPlan.creditsTotal}</span>
         </div>
-        <Progress 
-          value={100 - percentage} 
-          className={cn(
-            "h-2",
-            showWarning && "[&>div]:bg-destructive"
-          )}
-        />
+        <div className="h-2 bg-secondary rounded-full overflow-hidden">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${100 - percentage}%` }}
+            transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+            className={cn(
+              "h-full rounded-full transition-colors",
+              showWarning ? "bg-mixed" : "bg-primary"
+            )}
+          />
+        </div>
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+      <div className="flex items-center justify-between text-sm text-muted-foreground mb-5 p-3 bg-secondary/30 rounded-xl">
         <div className="flex items-center gap-1.5">
-          <Zap className="w-3.5 h-3.5" />
-          <span>{Math.floor(remaining / CREDIT_COSTS.quickScan)} Quick Scans left</span>
+          <Zap className="w-3.5 h-3.5 text-primary" />
+          <span>{Math.floor(remaining / CREDIT_COSTS.quickScan)} Quick Scans</span>
         </div>
+        <div className="w-px h-4 bg-border" />
         <div className="flex items-center gap-1.5">
-          <Crown className="w-3.5 h-3.5" />
-          <span>{Math.floor(remaining / CREDIT_COSTS.deepResearch)} Deep Research left</span>
+          <Crown className="w-3.5 h-3.5 text-primary" />
+          <span>{Math.floor(remaining / CREDIT_COSTS.deepResearch)} Deep Research</span>
         </div>
       </div>
 
       {userPlan.planId !== 'pro' && showUpgradeButton && (
-        <Button variant="outline" size="sm" className="w-full" asChild>
-          <Link to="/pricing">
-            <Crown className="w-4 h-4 mr-2" />
-            Upgrade for More Credits
-          </Link>
-        </Button>
+        <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="w-full rounded-xl group" 
+            asChild
+          >
+            <Link to="/pricing" className="flex items-center justify-center gap-2">
+              <Crown className="w-4 h-4 text-primary" />
+              <span>Upgrade for More</span>
+              <ChevronRight className="w-4 h-4 opacity-50 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </Button>
+        </motion.div>
       )}
 
-      <p className="text-xs text-muted-foreground mt-3 text-center">
+      <p className="text-xs text-muted-foreground mt-4 text-center">
         Resets {new Date(userPlan.renewsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
       </p>
-    </div>
+    </motion.div>
   );
 }
