@@ -1,23 +1,59 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Check, Zap, Crown, ShieldCheck, ArrowLeft, Sparkles } from 'lucide-react';
+import { Check, Zap, Crown, ShieldCheck, ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { PLANS, CREDIT_COSTS, type BillingCycle, type PlanId } from '@/lib/plans';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
+import { getPriceId, type StripePlanId } from '@/lib/stripe';
 
 export default function Pricing() {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly');
+  const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
 
-  const handleSelectPlan = (planId: PlanId) => {
+  const handleSelectPlan = async (planId: PlanId) => {
     if (planId === 'free') {
       navigate('/');
-    } else {
+      return;
+    }
+
+    if (!isAuthenticated) {
       localStorage.setItem('truthcart_selected_plan', JSON.stringify({ planId, billingCycle }));
       navigate('/auth?upgrade=true');
+      return;
+    }
+
+    setLoadingPlan(planId);
+
+    try {
+      const priceId = getPriceId(planId as StripePlanId, billingCycle);
+      
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: 'Checkout failed',
+        description: 'Unable to start checkout. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingPlan(null);
     }
   };
 
@@ -280,8 +316,16 @@ export default function Pricing() {
                           : "bg-primary text-primary-foreground hover:bg-primary/90"
                     )}
                     onClick={() => handleSelectPlan(plan.id)}
+                    disabled={loadingPlan === plan.id}
                   >
-                    {plan.id === 'free' ? 'Get Started' : 'Subscribe Now'}
+                    {loadingPlan === plan.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Loading...
+                      </>
+                    ) : (
+                      plan.id === 'free' ? 'Get Started' : 'Subscribe Now'
+                    )}
                   </Button>
                 </motion.div>
               </motion.div>
