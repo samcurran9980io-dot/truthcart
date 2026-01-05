@@ -78,7 +78,7 @@ export default function Auth() {
         const { error } = await signUp(email, password);
         if (error) {
           let message = error.message;
-          if (error.message.includes('already registered')) {
+          if (error.message.includes('already registered') || error.message.includes('User already registered')) {
             message = 'This email is already registered. Please sign in instead.';
           }
           toast({
@@ -89,9 +89,9 @@ export default function Auth() {
         } else {
           toast({
             title: 'Account created!',
-            description: 'You can now sign in with your credentials.',
+            description: 'Welcome to TruthCart!',
           });
-          setIsLogin(true);
+          navigate('/');
         }
       }
     } catch (error) {
