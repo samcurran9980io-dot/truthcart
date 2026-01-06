@@ -108,17 +108,25 @@ export function Header({ isAuthenticated, onLogout, userPlan }: HeaderProps) {
 
           {/* Auth Actions */}
           {isAuthenticated ? (
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={onLogout}
-                className="rounded-xl text-muted-foreground hover:text-foreground"
+            <>
+              <Link 
+                to="/pricing" 
+                className="hidden sm:inline-flex text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2"
               >
-                <LogOut className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Sign Out</span>
-              </Button>
-            </motion.div>
+                Pricing
+              </Link>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={onLogout}
+                  className="rounded-xl text-muted-foreground hover:text-foreground"
+                >
+                  <LogOut className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Sign Out</span>
+                </Button>
+              </motion.div>
+            </>
           ) : (
             <>
               <Link 
