@@ -1,11 +1,12 @@
 import { Button } from '@/components/ui/button';
-import { ShieldCheck, LogOut, Zap, Crown, AlertTriangle, Sun, Moon } from 'lucide-react';
+import { LogOut, Zap, Crown, AlertTriangle, Sun, Moon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { type UserPlan, shouldShowWarning, getPlanById } from '@/lib/plans';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import logo from '@/assets/logo.png';
 
 interface HeaderProps {
   isAuthenticated: boolean;
@@ -28,14 +29,48 @@ export function Header({ isAuthenticated, onLogout, userPlan }: HeaderProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Initialize dark mode from system preference or localStorage
   useEffect(() => {
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    setIsDark(isDarkMode);
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+      document.documentElement.classList.add('dark');
+      setIsDark(true);
+    } else {
+      document.documentElement.classList.remove('dark');
+      setIsDark(false);
+    }
+  }, []);
+
+  // Listen for system theme changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      if (!localStorage.getItem('theme')) {
+        if (e.matches) {
+          document.documentElement.classList.add('dark');
+          setIsDark(true);
+        } else {
+          document.documentElement.classList.remove('dark');
+          setIsDark(false);
+        }
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   const toggleDarkMode = () => {
-    document.documentElement.classList.toggle('dark');
-    setIsDark(!isDark);
+    const newDark = !isDark;
+    if (newDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+    setIsDark(newDark);
   };
 
   return (
@@ -56,9 +91,8 @@ export function Header({ isAuthenticated, onLogout, userPlan }: HeaderProps) {
           <motion.div 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20"
           >
-            <ShieldCheck className="w-5 h-5 text-primary-foreground" />
+            <img src={logo} alt="TruthCart" className="w-10 h-10 object-contain" />
           </motion.div>
           <span className="text-xl font-bold tracking-tight">
             TruthCart
