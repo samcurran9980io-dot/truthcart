@@ -5,7 +5,9 @@ const HISTORY_KEY = 'truthcart_history';
 const USER_PLAN_KEY = 'truthcart_user_plan';
 const MAX_HISTORY = 5;
 
-// Get default plan for new users
+const SIGNUP_BONUS_KEY = 'truthcart_signup_bonus_claimed';
+
+// Get default plan for new users (without signup)
 function getDefaultPlan(): UserPlan {
   const nextMonth = new Date();
   nextMonth.setMonth(nextMonth.getMonth() + 1);
@@ -14,9 +16,36 @@ function getDefaultPlan(): UserPlan {
     planId: 'free',
     billingCycle: 'monthly',
     creditsUsed: 0,
-    creditsTotal: 10,
+    creditsTotal: 5, // 5 credits for non-registered users
     renewsAt: nextMonth.toISOString(),
   };
+}
+
+// Apply signup bonus (5 credits one-time for new users)
+export function applySignupBonus(): UserPlan {
+  const bonusClaimed = localStorage.getItem(SIGNUP_BONUS_KEY);
+  if (bonusClaimed) {
+    return getUserPlan();
+  }
+  
+  const nextMonth = new Date();
+  nextMonth.setMonth(nextMonth.getMonth() + 1);
+  
+  const bonusPlan: UserPlan = {
+    planId: 'free',
+    billingCycle: 'monthly',
+    creditsUsed: 0,
+    creditsTotal: 5, // 5 bonus credits for signup
+    renewsAt: nextMonth.toISOString(),
+  };
+  
+  localStorage.setItem(SIGNUP_BONUS_KEY, 'true');
+  saveUserPlan(bonusPlan);
+  return bonusPlan;
+}
+
+export function hasClaimedSignupBonus(): boolean {
+  return localStorage.getItem(SIGNUP_BONUS_KEY) === 'true';
 }
 
 export function getUserPlan(): UserPlan {

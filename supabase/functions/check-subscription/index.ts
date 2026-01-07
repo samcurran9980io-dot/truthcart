@@ -57,7 +57,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         subscribed: false,
         planId: "free",
-        credits: 10
+        credits: 5
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -78,7 +78,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         subscribed: false,
         planId: "free",
-        credits: 10
+        credits: 5
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
