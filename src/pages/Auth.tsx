@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ShieldCheck, ArrowLeft, Mail, Lock, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { z } from 'zod';
+import { applySignupBonus } from '@/lib/storage';
 
 const authSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -87,9 +88,11 @@ export default function Auth() {
             variant: 'destructive',
           });
         } else {
+          // Apply signup bonus credits for new users
+          applySignupBonus();
           toast({
             title: 'Account created!',
-            description: 'Welcome to TruthCart!',
+            description: 'Welcome to TruthCart! You received 5 bonus credits.',
           });
           navigate('/');
         }
