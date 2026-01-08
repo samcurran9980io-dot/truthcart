@@ -6,6 +6,10 @@ import { Label } from '@/components/ui/label';
 import { AnalysisInput, AnalysisMode } from '@/types/analysis';
 import { cn } from '@/lib/utils';
 import { Zap, Search, Lock, Crown, Sparkles } from 'lucide-react';
+import { ChromeLogo } from '@/components/ChromeLogo';
+
+// Update this URL when your extension is published on the Chrome Web Store
+export const CHROME_EXTENSION_URL = '#';
 
 export interface AnalysisFormRef {
   triggerSubmit: () => void;
@@ -140,6 +144,27 @@ export const AnalysisForm = forwardRef<AnalysisFormRef, AnalysisFormProps>(({
         >
           We ignore official reviews and analyze real community discussions.
         </motion.p>
+
+        {/* Chrome Extension CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+          className="relative mt-6 flex flex-col items-center gap-2"
+        >
+          <a
+            href={CHROME_EXTENSION_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2.5 px-6 py-3 bg-white hover:bg-gray-50 text-gray-900 font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <ChromeLogo className="w-5 h-5" />
+            <span>Add to Chrome – It's Free</span>
+          </a>
+          <p className="text-background/50 text-xs">
+            Compatible with Amazon, Flipkart, and Reddit
+          </p>
+        </motion.div>
       </div>
 
       {/* Form Content */}
