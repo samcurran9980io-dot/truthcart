@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { AnalysisForm, AnalysisFormRef } from '@/components/AnalysisForm';
+import { ChromeExtensionBanner } from '@/components/ChromeExtensionBanner';
 import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { LoadingSteps } from '@/components/LoadingSteps';
 import { HistoryList } from '@/components/HistoryList';
@@ -225,6 +226,9 @@ export default function Index() {
                 />
               </motion.div>
             )}
+
+            {/* Chrome Extension Banner */}
+            <ChromeExtensionBanner />
 
             {/* Main Layout */}
             <div className="grid lg:grid-cols-3 gap-8">
