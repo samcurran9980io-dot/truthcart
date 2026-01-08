@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Chrome, ExternalLink, Sparkles } from 'lucide-react';
+import { ExternalLink, Sparkles, Zap } from 'lucide-react';
 import { ChromeLogo } from '@/components/ChromeLogo';
 
 // Update this URL when your extension is published on the Chrome Web Store
@@ -10,51 +10,72 @@ export function ChromeExtensionBanner() {
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+      transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
       className="mb-8"
     >
       <a
         href={CHROME_EXTENSION_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="group relative flex items-center justify-between gap-4 p-4 md:p-5 rounded-2xl border border-border/50 bg-gradient-to-r from-card via-card to-primary/5 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 overflow-hidden"
+        className="group relative flex items-center justify-between gap-3 md:gap-6 p-3 md:p-4 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 overflow-hidden"
       >
-        {/* Background glow effect */}
-        <div className="absolute right-0 top-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary/15 transition-colors duration-300" />
+        {/* Animated background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
+        {/* Animated glow orbs */}
+        <div className="absolute -left-10 top-1/2 -translate-y-1/2 w-24 h-24 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition-colors duration-500" />
+        <div className="absolute -right-10 top-1/2 -translate-y-1/2 w-32 h-32 bg-primary/15 rounded-full blur-3xl group-hover:bg-primary/25 transition-colors duration-500" />
         
         {/* Left content */}
-        <div className="relative flex items-center gap-4">
-          {/* Chrome logo with glow */}
-          <div className="relative">
-            <div className="absolute inset-0 bg-primary/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <div className="relative flex items-center justify-center w-12 h-12 rounded-xl bg-white shadow-md group-hover:shadow-lg transition-shadow duration-300">
-              <ChromeLogo className="w-7 h-7" />
+        <div className="relative flex items-center gap-3 md:gap-4">
+          {/* Chrome logo with animated ring */}
+          <div className="relative flex-shrink-0">
+            {/* Pulsing ring */}
+            <motion.div 
+              className="absolute inset-0 rounded-xl bg-primary/30 blur-md"
+              animate={{ 
+                scale: [1, 1.15, 1],
+                opacity: [0.5, 0.8, 0.5]
+              }}
+              transition={{ 
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            <div className="relative flex items-center justify-center w-11 h-11 md:w-12 md:h-12 rounded-xl bg-white shadow-lg ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all duration-300">
+              <ChromeLogo className="w-6 h-6 md:w-7 md:h-7" />
             </div>
           </div>
           
           {/* Text content */}
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-foreground text-sm md:text-base">
-                Get the Chrome Extension
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-foreground text-sm md:text-base tracking-tight">
+                Get Chrome Extension
               </span>
-              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
-                <Sparkles className="w-3 h-3" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/15 text-primary text-[10px] md:text-xs font-semibold uppercase tracking-wide">
+                <Zap className="w-2.5 h-2.5 md:w-3 md:h-3" />
                 Free
               </span>
             </div>
-            <span className="text-muted-foreground text-xs md:text-sm">
-              Works on Amazon, Flipkart & Reddit – One-click analysis
+            <span className="text-muted-foreground text-[11px] md:text-sm leading-tight">
+              <span className="hidden sm:inline">Works on </span>Amazon, Flipkart & Reddit
             </span>
           </div>
         </div>
         
         {/* Right CTA button */}
-        <div className="relative flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-xl bg-foreground text-background font-medium text-sm whitespace-nowrap group-hover:bg-primary transition-colors duration-200">
-          <span className="hidden md:inline">Add to Chrome</span>
-          <span className="md:hidden">Install</span>
-          <ExternalLink className="w-4 h-4 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200" />
-        </div>
+        <motion.div 
+          className="relative flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-5 md:py-2.5 rounded-xl bg-primary text-primary-foreground font-semibold text-xs md:text-sm whitespace-nowrap shadow-lg shadow-primary/25 group-hover:shadow-primary/40 transition-all duration-300"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
+          <span className="hidden sm:inline">Add to Chrome</span>
+          <span className="sm:hidden">Install</span>
+          <ExternalLink className="w-3 h-3 md:w-3.5 md:h-3.5 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-200" />
+        </motion.div>
       </a>
     </motion.div>
   );
