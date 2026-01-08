@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/Header';
-import { AnalysisForm } from '@/components/AnalysisForm';
+import { AnalysisForm, AnalysisFormRef } from '@/components/AnalysisForm';
 import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { LoadingSteps } from '@/components/LoadingSteps';
 import { HistoryList } from '@/components/HistoryList';
@@ -23,14 +24,52 @@ import { type UserPlan, shouldShowWarning, CREDIT_COSTS } from '@/lib/plans';
 import { AnalysisInput, AnalysisResult, HistoryItem } from '@/types/analysis';
 
 export default function Index() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const formRef = useRef<AnalysisFormRef>(null);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [userPlan, setUserPlan] = useState<UserPlan>(getUserPlan());
   const [showUpgradePrompt, setShowUpgradePrompt] = useState<'no-credits' | 'deep-research-locked' | 'limit-reached' | null>(null);
+  
+  // Auto-analysis from URL params (extension support)
+  const [initialProductUrl, setInitialProductUrl] = useState('');
+  const [initialProductName, setInitialProductName] = useState('');
+  const [autoAnalysisTriggered, setAutoAnalysisTriggered] = useState(false);
 
   const { isAuthenticated, signOut, loading: authLoading } = useAuth();
   const { toast } = useToast();
+
+  // Parse URL params and set initial values
+  useEffect(() => {
+    const urlParam = searchParams.get('url');
+    const nameParam = searchParams.get('name');
+    
+    if (urlParam) {
+      setInitialProductUrl(decodeURIComponent(urlParam));
+    }
+    if (nameParam) {
+      setInitialProductName(decodeURIComponent(nameParam));
+    }
+    
+    // Clear URL params after reading them
+    if (urlParam || nameParam) {
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  // Auto-trigger analysis after form is populated
+  useEffect(() => {
+    if (initialProductUrl && !autoAnalysisTriggered && !isLoading && !result && formRef.current) {
+      setAutoAnalysisTriggered(true);
+      // Wait 0.5s then trigger submit
+      const timer = setTimeout(() => {
+        formRef.current?.triggerSubmit();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [initialProductUrl, autoAnalysisTriggered, isLoading, result]);
 
   useEffect(() => {
     setHistory(getHistory());
@@ -192,6 +231,7 @@ export default function Index() {
               {/* Form Section */}
               <div className="lg:col-span-2">
                 <AnalysisForm
+                  ref={formRef}
                   onSubmit={handleAnalysis}
                   isLoading={isLoading}
                   remainingScans={remainingCredits}
@@ -199,6 +239,8 @@ export default function Index() {
                   isAuthenticated={isAuthenticated}
                   hasPremium={hasPremium}
                   onUpgradeClick={() => setShowUpgradePrompt('deep-research-locked')}
+                  initialProductName={initialProductName}
+                  initialProductUrl={initialProductUrl}
                 />
               </div>
 
