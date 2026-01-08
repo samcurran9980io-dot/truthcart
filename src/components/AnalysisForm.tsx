@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,6 +6,11 @@ import { Label } from '@/components/ui/label';
 import { AnalysisInput, AnalysisMode } from '@/types/analysis';
 import { cn } from '@/lib/utils';
 import { Zap, Search, Lock, Crown, Sparkles } from 'lucide-react';
+
+export interface AnalysisFormRef {
+  triggerSubmit: () => void;
+  setFields: (fields: { productName?: string; productUrl?: string }) => void;
+}
 
 interface AnalysisFormProps {
   onSubmit: (input: AnalysisInput) => void;
@@ -15,6 +20,8 @@ interface AnalysisFormProps {
   isAuthenticated: boolean;
   hasPremium: boolean;
   onUpgradeClick?: () => void;
+  initialProductName?: string;
+  initialProductUrl?: string;
 }
 
 const placeholders = [
@@ -24,7 +31,7 @@ const placeholders = [
   "e.g. Samsung Galaxy S24 Ultra",
 ];
 
-export function AnalysisForm({
+export const AnalysisForm = forwardRef<AnalysisFormRef, AnalysisFormProps>(({
   onSubmit,
   isLoading,
   remainingScans,
@@ -32,13 +39,42 @@ export function AnalysisForm({
   isAuthenticated,
   hasPremium,
   onUpgradeClick,
-}: AnalysisFormProps) {
-  const [productName, setProductName] = useState('');
+  initialProductName = '',
+  initialProductUrl = '',
+}, ref) => {
+  const [productName, setProductName] = useState(initialProductName);
   const [brand, setBrand] = useState('');
-  const [productUrl, setProductUrl] = useState('');
+  const [productUrl, setProductUrl] = useState(initialProductUrl);
   const [mode, setMode] = useState<AnalysisMode>('fast');
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
+
+  // Update fields when initial values change (for auto-analysis)
+  useEffect(() => {
+    if (initialProductName) setProductName(initialProductName);
+  }, [initialProductName]);
+
+  useEffect(() => {
+    if (initialProductUrl) setProductUrl(initialProductUrl);
+  }, [initialProductUrl]);
+
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    triggerSubmit: () => {
+      if (productName.trim() && productUrl.trim()) {
+        onSubmit({
+          productName: productName.trim(),
+          brand: brand.trim() || undefined,
+          productUrl: productUrl.trim(),
+          mode,
+        });
+      }
+    },
+    setFields: (fields) => {
+      if (fields.productName) setProductName(fields.productName);
+      if (fields.productUrl) setProductUrl(fields.productUrl);
+    },
+  }));
 
   // Animated placeholder cycling
   useEffect(() => {
@@ -355,4 +391,6 @@ export function AnalysisForm({
       </form>
     </motion.div>
   );
-}
+});
+
+AnalysisForm.displayName = 'AnalysisForm';
