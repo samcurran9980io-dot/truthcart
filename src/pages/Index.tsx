@@ -238,8 +238,6 @@ export default function Index() {
               </motion.div>
             )}
 
-            {/* Chrome Extension Banner */}
-            <ChromeExtensionBanner />
 
             {/* Main Layout */}
             <div className="grid lg:grid-cols-3 gap-8">
@@ -264,18 +262,21 @@ export default function Index() {
 
               {/* Sidebar */}
               <div className="lg:col-span-1 space-y-6">
-                {/* Credits */}
-                <CreditDisplay userPlan={userPlan} variant="full" />
-
                 {/* History */}
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
+                  transition={{ delay: 0.1 }}
                   className="bg-card rounded-3xl p-6 shadow-premium border border-border/50"
                 >
                   <HistoryList items={history} onSelect={handleHistorySelect} />
                 </motion.div>
+
+                {/* Chrome Extension Banner - between History and Credits */}
+                <ChromeExtensionBanner />
+
+                {/* Credits */}
+                <CreditDisplay userPlan={userPlan} variant="full" />
               </div>
             </div>
           </motion.div>
