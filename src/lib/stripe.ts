@@ -1,12 +1,12 @@
 // Stripe price IDs for TruthCart plans
 export const STRIPE_PRICES = {
   basic: {
-    monthly: "price_1SmCAUAh61tDVg3ixpUAU2Ng",
-    yearly: "price_1SmCCpAh61tDVg3ipgefRMXx",
+    monthly: "price_1SnkJIAh61tDVg3imVX5thGm",
+    yearly: "price_1SnkMZAh61tDVg3i7oRpeEud",
   },
   pro: {
-    monthly: "price_1SmCCHAh61tDVg3itk8UMIFS",
-    yearly: "price_1SmCD6Ah61tDVg3ipH9QYrp0",
+    monthly: "price_1SnkL1Ah61tDVg3iIuLIemFU",
+    yearly: "price_1SnkNtAh61tDVg3is8E8qBNy",
   },
 } as const;
 
