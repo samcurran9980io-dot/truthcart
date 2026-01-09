@@ -46,7 +46,11 @@ interface AnalyticsData {
   accuracyRate: number;
 }
 
-export function StatsCounter() {
+interface StatsCounterProps {
+  variant?: 'horizontal' | 'sidebar';
+}
+
+export function StatsCounter({ variant = 'horizontal' }: StatsCounterProps) {
   const [stats, setStats] = useState<AnalyticsData>({
     productsAnalyzed: 0,
     happyUsers: 0,
@@ -90,6 +94,21 @@ export function StatsCounter() {
   }, []);
 
   if (isLoading) {
+    if (variant === 'sidebar') {
+      return (
+        <div className="bg-card rounded-3xl p-5 shadow-premium border border-border/50">
+          <div className="flex items-center justify-between">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex flex-col items-center gap-1">
+                <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+                <div className="w-10 h-4 bg-muted rounded animate-pulse" />
+                <div className="w-16 h-3 bg-muted rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex flex-wrap items-center justify-center gap-6 md:gap-10 py-6">
         {[1, 2, 3].map((i) => (
@@ -105,6 +124,55 @@ export function StatsCounter() {
     );
   }
 
+  // Sidebar compact variant
+  if (variant === 'sidebar') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15, duration: 0.5 }}
+        className="bg-card rounded-3xl p-5 shadow-premium border border-border/50"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col items-center text-center">
+            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mb-1">
+              <TrendingUp className="w-4 h-4 text-primary" />
+            </div>
+            <span className="text-base font-bold text-foreground">
+              <AnimatedCounter end={stats.productsAnalyzed} duration={2.5} />
+            </span>
+            <span className="text-[10px] text-muted-foreground">Products Analyzed</span>
+          </div>
+
+          <div className="w-px h-12 bg-border" />
+
+          <div className="flex flex-col items-center text-center">
+            <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center mb-1">
+              <Users className="w-4 h-4 text-primary" />
+            </div>
+            <span className="text-base font-bold text-foreground">
+              <AnimatedCounter end={stats.happyUsers} duration={2} />
+            </span>
+            <span className="text-[10px] text-muted-foreground">Happy Users</span>
+          </div>
+
+          <div className="w-px h-12 bg-border" />
+
+          <div className="flex flex-col items-center text-center">
+            <div className="w-9 h-9 rounded-full bg-trusted/10 flex items-center justify-center mb-1">
+              <Shield className="w-4 h-4 text-trusted" />
+            </div>
+            <span className="text-base font-bold text-foreground">
+              <AnimatedCounter end={stats.accuracyRate} duration={1.5} suffix="%" />
+            </span>
+            <span className="text-[10px] text-muted-foreground">Accuracy Rate</span>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Horizontal variant (original)
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
