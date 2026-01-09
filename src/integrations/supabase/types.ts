@@ -14,13 +14,34 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      analytics: {
+        Row: {
+          id: string
+          metric_name: string
+          metric_value: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          metric_name: string
+          metric_value?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          metric_name?: string
+          metric_value?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_happy_users: { Args: never; Returns: undefined }
+      increment_products_analyzed: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

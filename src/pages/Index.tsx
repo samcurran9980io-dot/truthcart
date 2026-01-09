@@ -5,7 +5,7 @@ import { Header } from '@/components/Header';
 import { AnalysisForm, AnalysisFormRef } from '@/components/AnalysisForm';
 import { ChromeExtensionBanner } from '@/components/ChromeExtensionBanner';
 import { FloatingOrbs } from '@/components/FloatingOrbs';
-import { StatsCounter } from '@/components/StatsCounter';
+import { StatsCounter, incrementProductsAnalyzed } from '@/components/StatsCounter';
 import { PlatformLogos } from '@/components/PlatformLogos';
 import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { LoadingSteps } from '@/components/LoadingSteps';
@@ -124,8 +124,9 @@ export default function Index() {
 
       setResult(analysisResult);
 
-      // Trigger confetti on success!
+      // Trigger confetti on success and increment analytics
       triggerSuccessConfetti();
+      incrementProductsAnalyzed();
 
       const creditsUsed = input.mode === 'fast' ? CREDIT_COSTS.quickScan : CREDIT_COSTS.deepResearch;
       toast({
