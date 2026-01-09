@@ -4,6 +4,9 @@ import { useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { AnalysisForm, AnalysisFormRef } from '@/components/AnalysisForm';
 import { ChromeExtensionBanner } from '@/components/ChromeExtensionBanner';
+import { FloatingOrbs } from '@/components/FloatingOrbs';
+import { StatsCounter } from '@/components/StatsCounter';
+import { PlatformLogos } from '@/components/PlatformLogos';
 import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { LoadingSteps } from '@/components/LoadingSteps';
 import { HistoryList } from '@/components/HistoryList';
@@ -12,6 +15,7 @@ import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { triggerSuccessConfetti } from '@/lib/confetti';
 import {
   getHistory,
   saveToHistory,
@@ -120,6 +124,9 @@ export default function Index() {
 
       setResult(analysisResult);
 
+      // Trigger confetti on success!
+      triggerSuccessConfetti();
+
       const creditsUsed = input.mode === 'fast' ? CREDIT_COSTS.quickScan : CREDIT_COSTS.deepResearch;
       toast({
         title: 'Analysis complete',
@@ -188,14 +195,17 @@ export default function Index() {
   const hasPremium = userPlan.planId !== 'free';
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Floating Background Orbs */}
+      <FloatingOrbs />
+      
       <Header 
         isAuthenticated={isAuthenticated} 
         onLogout={handleLogout} 
         userPlan={userPlan}
       />
 
-      <main className="container mx-auto px-4 py-10 md:py-16">
+      <main className="container mx-auto px-4 py-10 md:py-16 relative z-10">
         {/* Loading State */}
         {isLoading && <LoadingSteps isLoading={isLoading} />}
 
@@ -211,6 +221,9 @@ export default function Index() {
             animate={{ opacity: 1 }}
             className="max-w-5xl mx-auto"
           >
+            {/* Stats Counter */}
+            <StatsCounter />
+
             {/* Upgrade Prompt */}
             {showUpgradePrompt && (
               <motion.div 
@@ -244,6 +257,9 @@ export default function Index() {
                   initialProductName={initialProductName}
                   initialProductUrl={initialProductUrl}
                 />
+                
+                {/* Platform Logos */}
+                <PlatformLogos />
               </div>
 
               {/* Sidebar */}
@@ -266,8 +282,10 @@ export default function Index() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-border/50 mt-auto">
+      {/* Footer with gradient divider */}
+      <footer className="mt-auto relative">
+        {/* Gradient divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <p>© 2026 TruthCart. All rights reserved.</p>

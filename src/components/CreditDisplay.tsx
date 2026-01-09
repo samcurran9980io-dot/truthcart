@@ -56,6 +56,14 @@ export function CreditDisplay({ userPlan, variant = 'compact', showUpgradeButton
     );
   }
 
+  // Progress ring calculations
+  const ringSize = 100;
+  const strokeWidth = 8;
+  const radius = (ringSize - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const usedPercentage = percentage;
+  const strokeDashoffset = circumference - (usedPercentage / 100) * circumference;
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -80,22 +88,47 @@ export function CreditDisplay({ userPlan, variant = 'compact', showUpgradeButton
         )}
       </div>
 
-      <div className="mb-5">
-        <div className="flex items-baseline justify-between mb-3">
-          <span className="text-4xl font-bold text-foreground">{remaining}</span>
-          <span className="text-sm text-muted-foreground">of {userPlan.creditsTotal}</span>
+      {/* Progress Ring */}
+      <div className="flex items-center justify-center mb-5">
+        <div className="relative">
+          <svg width={ringSize} height={ringSize} className="-rotate-90">
+            {/* Background ring */}
+            <circle
+              cx={ringSize / 2}
+              cy={ringSize / 2}
+              r={radius}
+              fill="none"
+              stroke="hsl(var(--secondary))"
+              strokeWidth={strokeWidth}
+            />
+            {/* Progress ring */}
+            <motion.circle
+              cx={ringSize / 2}
+              cy={ringSize / 2}
+              r={radius}
+              fill="none"
+              stroke={showWarning ? "hsl(var(--mixed))" : "hsl(var(--primary))"}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              initial={{ strokeDashoffset: circumference }}
+              animate={{ strokeDashoffset }}
+              transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
+              style={{
+                strokeDasharray: circumference,
+              }}
+            />
+          </svg>
+          {/* Center text */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-2xl font-bold text-foreground">{remaining}</span>
+            <span className="text-[10px] text-muted-foreground">credits</span>
+          </div>
         </div>
-        <div className="h-2 bg-secondary rounded-full overflow-hidden">
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={{ width: `${100 - percentage}%` }}
-            transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-            className={cn(
-              "h-full rounded-full transition-colors",
-              showWarning ? "bg-mixed" : "bg-primary"
-            )}
-          />
-        </div>
+      </div>
+
+      <div className="text-center text-sm text-muted-foreground mb-5">
+        <span className="text-foreground font-medium">{userPlan.creditsUsed}</span> of{' '}
+        <span className="text-foreground font-medium">{userPlan.creditsTotal}</span> used
       </div>
 
       <div className="flex items-center justify-between text-sm text-muted-foreground mb-5 p-3 bg-secondary/30 rounded-xl">
