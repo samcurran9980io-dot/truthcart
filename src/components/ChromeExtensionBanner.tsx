@@ -19,8 +19,25 @@ export function ChromeExtensionBanner() {
         rel="noopener noreferrer"
         className="group relative flex items-center justify-between gap-3 md:gap-6 p-3 md:p-4 rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 overflow-hidden"
       >
-        {/* Animated background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        {/* Shimmer animation overlay */}
+        <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 ease-in-out" />
+        <motion.div 
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
+          animate={{ x: ['-100%', '100%'] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear', repeatDelay: 2 }}
+        />
+        
+        {/* NEW Badge */}
+        <div className="absolute -top-1 -right-1 md:top-2 md:right-2 z-10">
+          <motion.div
+            initial={{ scale: 0, rotate: -12 }}
+            animate={{ scale: 1, rotate: -12 }}
+            transition={{ delay: 0.3, type: 'spring', stiffness: 400, damping: 15 }}
+            className="px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] md:text-[10px] font-bold uppercase tracking-wider shadow-lg shadow-orange-500/30"
+          >
+            New
+          </motion.div>
+        </div>
         
         {/* Animated glow orbs */}
         <div className="absolute -left-10 top-1/2 -translate-y-1/2 w-24 h-24 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition-colors duration-500" />
