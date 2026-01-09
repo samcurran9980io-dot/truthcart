@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { AnalysisForm, AnalysisFormRef } from '@/components/AnalysisForm';
@@ -222,8 +223,6 @@ export default function Index() {
             animate={{ opacity: 1 }}
             className="max-w-5xl mx-auto"
           >
-            {/* Stats Counter */}
-            <StatsCounter />
 
             {/* Upgrade Prompt */}
             {showUpgradePrompt && (
@@ -295,9 +294,9 @@ export default function Index() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <p>© 2026 TruthCart. All rights reserved.</p>
             <div className="flex items-center gap-6">
-              <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
-              <a href="#" className="hover:text-foreground transition-colors">Terms</a>
-              <a href="#" className="hover:text-foreground transition-colors">Contact</a>
+              <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+              <Link to="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+              <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
             </div>
           </div>
         </div>
