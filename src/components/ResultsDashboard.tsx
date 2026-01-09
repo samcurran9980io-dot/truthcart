@@ -5,8 +5,9 @@ import { TrustGauge } from './TrustGauge';
 import { BreakdownBar } from './BreakdownBar';
 import { CommunityQuote } from './CommunityQuote';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ExternalLink, AlertTriangle, CheckCircle, Sparkles, ThumbsUp, ThumbsDown, Database, Link2, Shield } from 'lucide-react';
+import { ArrowLeft, ExternalLink, AlertTriangle, CheckCircle, Sparkles, ThumbsUp, ThumbsDown, Database, Link2, Shield, Download, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { exportAnalysisPDF } from '@/lib/pdfExport';
 
 interface ResultsDashboardProps {
   result: AnalysisResult;
@@ -16,6 +17,7 @@ interface ResultsDashboardProps {
 export function ResultsDashboard({ result, onBack }: ResultsDashboardProps) {
   const isPremium = result.mode === 'deep';
   const [feedbackGiven, setFeedbackGiven] = useState<'up' | 'down' | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   const statusBadge = {
     trusted: { label: 'TRUSTED', bgClass: 'bg-trusted/10', textClass: 'text-trusted', borderClass: 'border-trusted/30' },
@@ -48,16 +50,44 @@ export function ResultsDashboard({ result, onBack }: ResultsDashboardProps) {
       animate="visible"
       className="max-w-6xl mx-auto"
     >
-      {/* Back Button */}
-      <motion.button
-        variants={itemVariants}
-        onClick={onBack}
-        whileHover={{ x: -4 }}
-        className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors mb-8"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        <span className="text-sm font-medium">Analyze another product</span>
-      </motion.button>
+      {/* Top Actions Bar */}
+      <div className="flex items-center justify-between mb-8">
+        <motion.button
+          variants={itemVariants}
+          onClick={onBack}
+          whileHover={{ x: -4 }}
+          className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm font-medium">Analyze another product</span>
+        </motion.button>
+
+        <motion.div variants={itemVariants}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-xl gap-2"
+            onClick={async () => {
+              setIsExporting(true);
+              try {
+                await exportAnalysisPDF(result);
+              } catch (error) {
+                console.error('Export failed:', error);
+              } finally {
+                setIsExporting(false);
+              }
+            }}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            Export PDF
+          </Button>
+        </motion.div>
+      </div>
 
       {/* Hero Section - Trust Score */}
       <motion.div 

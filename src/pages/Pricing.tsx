@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Check, Zap, Crown, ShieldCheck, ArrowLeft, Loader2 } from 'lucide-react';
+import { Check, Zap, Crown, ShieldCheck, ArrowLeft, Loader2, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { PLANS, CREDIT_COSTS, type BillingCycle, type PlanId } from '@/lib/plans';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -399,6 +405,115 @@ export default function Pricing() {
           >
             Credits reset monthly. No rollover.
           </motion.p>
+        </motion.div>
+
+        {/* FAQ Section */}
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="max-w-3xl mx-auto mt-20"
+        >
+          <motion.div variants={itemVariants} className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 mb-4">
+              <HelpCircle className="w-6 h-6 text-primary" />
+              <h2 className="text-2xl font-bold">Frequently Asked Questions</h2>
+            </div>
+            <p className="text-muted-foreground">Everything you need to know about TruthCart</p>
+          </motion.div>
+
+          <motion.div variants={itemVariants}>
+            <Accordion type="single" collapsible className="space-y-4">
+              <AccordionItem value="what-is" className="bg-card rounded-2xl border border-border/50 px-6">
+                <AccordionTrigger className="text-left font-semibold hover:no-underline py-5">
+                  What is TruthCart and how does it work?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5">
+                  TruthCart uses AI to analyze product reviews across multiple sources (Amazon, Reddit, YouTube, etc.) 
+                  to detect fake reviews, manipulation patterns, and potential scams. We provide a Trust Score from 0-100 
+                  along with detailed analysis to help you make informed purchasing decisions.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="credits" className="bg-card rounded-2xl border border-border/50 px-6">
+                <AccordionTrigger className="text-left font-semibold hover:no-underline py-5">
+                  How do credits work?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5">
+                  Credits are used to perform product analyses. A Quick Scan costs 1 credit and provides fast, 
+                  surface-level analysis. Deep Research costs 3 credits and includes comprehensive analysis with 
+                  community insights, risk factors, and data sources. Credits reset monthly and don't roll over.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="difference" className="bg-card rounded-2xl border border-border/50 px-6">
+                <AccordionTrigger className="text-left font-semibold hover:no-underline py-5">
+                  What's the difference between Quick Scan and Deep Research?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5">
+                  <strong>Quick Scan (1 credit):</strong> Fast analysis providing a Trust Score, basic breakdown, 
+                  and verdict. Great for everyday purchases.<br/><br/>
+                  <strong>Deep Research (3 credits):</strong> Comprehensive analysis including community voice from 
+                  Reddit/YouTube, risk factors, reality gaps, data source links, and detailed sentiment analysis. 
+                  Recommended for expensive or important purchases.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="accuracy" className="bg-card rounded-2xl border border-border/50 px-6">
+                <AccordionTrigger className="text-left font-semibold hover:no-underline py-5">
+                  How accurate is the AI analysis?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5">
+                  Our AI achieves approximately 96% accuracy in detecting review manipulation patterns. However, 
+                  AI analysis is a research tool—not a guarantee. We recommend using TruthCart as one factor in 
+                  your purchasing decisions, alongside your own research and judgment.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="platforms" className="bg-card rounded-2xl border border-border/50 px-6">
+                <AccordionTrigger className="text-left font-semibold hover:no-underline py-5">
+                  Which platforms does TruthCart support?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5">
+                  TruthCart can analyze products from Amazon, eBay, Flipkart, Walmart, and most major e-commerce 
+                  platforms. Our Chrome extension provides instant overlays on supported sites. You can also 
+                  paste any product URL directly into our web app for analysis.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="cancel" className="bg-card rounded-2xl border border-border/50 px-6">
+                <AccordionTrigger className="text-left font-semibold hover:no-underline py-5">
+                  Can I cancel my subscription anytime?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5">
+                  Yes! You can cancel your subscription at any time. You'll continue to have access to your plan 
+                  until the end of your current billing period. No hidden fees or cancellation penalties.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="export" className="bg-card rounded-2xl border border-border/50 px-6">
+                <AccordionTrigger className="text-left font-semibold hover:no-underline py-5">
+                  Can I export my analysis reports?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5">
+                  Yes! Both Basic and Pro plans include the ability to download PDF reports of your analysis 
+                  results. These reports include the Trust Score, breakdown, verdict, and all available data 
+                  for offline reference or sharing.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="extension" className="bg-card rounded-2xl border border-border/50 px-6">
+                <AccordionTrigger className="text-left font-semibold hover:no-underline py-5">
+                  What's included in the Chrome extension?
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground pb-5">
+                  The free Chrome extension provides instant trust overlays on product pages. Pro users get 
+                  additional features like price drop alerts, review trend charts, competitor comparisons, 
+                  and the ability to export reports directly from the extension.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </motion.div>
         </motion.div>
       </main>
 
