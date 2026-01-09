@@ -46,6 +46,7 @@ export default function Index() {
   useEffect(() => {
     const urlParam = searchParams.get('url');
     const nameParam = searchParams.get('name');
+    const autoParam = searchParams.get('auto');
     
     if (urlParam) {
       setInitialProductUrl(decodeURIComponent(urlParam));
@@ -54,23 +55,20 @@ export default function Index() {
       setInitialProductName(decodeURIComponent(nameParam));
     }
     
-    // Clear URL params after reading them
-    if (urlParam || nameParam) {
-      setSearchParams({}, { replace: true });
-    }
-  }, [searchParams, setSearchParams]);
-
-  // Auto-trigger analysis after form is populated
-  useEffect(() => {
-    if (initialProductUrl && !autoAnalysisTriggered && !isLoading && !result && formRef.current) {
+    // Auto-trigger analysis if auto=true and we have required fields
+    if (autoParam === 'true' && urlParam && nameParam && !autoAnalysisTriggered) {
       setAutoAnalysisTriggered(true);
-      // Wait 0.5s then trigger submit
-      const timer = setTimeout(() => {
+      // Wait for form to populate, then trigger submit
+      setTimeout(() => {
         formRef.current?.triggerSubmit();
       }, 500);
-      return () => clearTimeout(timer);
     }
-  }, [initialProductUrl, autoAnalysisTriggered, isLoading, result]);
+    
+    // Clear URL params after reading them
+    if (urlParam || nameParam || autoParam) {
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams, autoAnalysisTriggered]);
 
   useEffect(() => {
     setHistory(getHistory());
