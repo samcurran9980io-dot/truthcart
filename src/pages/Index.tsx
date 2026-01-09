@@ -261,8 +261,11 @@ export default function Index() {
               </div>
 
               {/* Sidebar */}
-              <div className="lg:col-span-1 space-y-6">
-                {/* History */}
+              <div className="lg:col-span-1 space-y-5">
+                {/* Credits - User's primary status */}
+                <CreditDisplay userPlan={userPlan} variant="full" />
+
+                {/* History - User's data */}
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -272,14 +275,11 @@ export default function Index() {
                   <HistoryList items={history} onSelect={handleHistorySelect} />
                 </motion.div>
 
-                {/* Stats Counter - between History and Extension */}
+                {/* Stats Counter - Social proof */}
                 <StatsCounter variant="sidebar" />
 
-                {/* Chrome Extension Banner */}
+                {/* Chrome Extension Banner - CTA */}
                 <ChromeExtensionBanner />
-
-                {/* Credits */}
-                <CreditDisplay userPlan={userPlan} variant="full" />
               </div>
             </div>
           </motion.div>
