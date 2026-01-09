@@ -273,7 +273,10 @@ export default function Index() {
                   <HistoryList items={history} onSelect={handleHistorySelect} />
                 </motion.div>
 
-                {/* Chrome Extension Banner - between History and Credits */}
+                {/* Stats Counter - between History and Extension */}
+                <StatsCounter variant="sidebar" />
+
+                {/* Chrome Extension Banner */}
                 <ChromeExtensionBanner />
 
                 {/* Credits */}
