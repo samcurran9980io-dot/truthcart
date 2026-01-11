@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AnalysisInput, AnalysisMode } from '@/types/analysis';
 import { cn } from '@/lib/utils';
-import { Zap, Search, Lock, Crown, Sparkles } from 'lucide-react';
+import { Zap, Search, Lock, Crown, Sparkles, Clipboard } from 'lucide-react';
+import { toast } from 'sonner';
 
 export interface AnalysisFormRef {
   triggerSubmit: () => void;
@@ -150,7 +151,7 @@ export const AnalysisForm = forwardRef<AnalysisFormRef, AnalysisFormProps>(({
             Product Name <span className="text-primary">*</span>
           </Label>
           <div className={cn(
-            "relative rounded-2xl transition-all duration-300",
+            "relative rounded-2xl transition-all duration-300 flex gap-2",
             isFocused && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background"
           )}>
             <Input
@@ -164,6 +165,24 @@ export const AnalysisForm = forwardRef<AnalysisFormRef, AnalysisFormProps>(({
               required
               className="h-14 text-base md:text-lg bg-secondary/50 border-border/50 rounded-2xl px-5 placeholder:text-muted-foreground/50 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-primary/50"
             />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              disabled={isLoading}
+              onClick={async () => {
+                try {
+                  const text = await navigator.clipboard.readText();
+                  setProductName(text);
+                  toast.success('Pasted product name');
+                } catch {
+                  toast.error('Failed to paste from clipboard');
+                }
+              }}
+              className="h-14 w-14 shrink-0 rounded-2xl border-border/50 bg-secondary/50 hover:bg-secondary"
+            >
+              <Clipboard className="w-5 h-5" />
+            </Button>
           </div>
         </div>
 
@@ -187,16 +206,36 @@ export const AnalysisForm = forwardRef<AnalysisFormRef, AnalysisFormProps>(({
             <Label htmlFor="productUrl" className="text-foreground font-medium text-sm">
               Product URL <span className="text-primary">*</span>
             </Label>
-            <Input
-              id="productUrl"
-              type="url"
-              placeholder="https://amazon.com/..."
-              value={productUrl}
-              onChange={(e) => setProductUrl(e.target.value)}
-              disabled={isLoading}
-              required
-              className="h-12 bg-secondary/50 border-border/50 rounded-xl px-4 placeholder:text-muted-foreground/50"
-            />
+            <div className="flex gap-2">
+              <Input
+                id="productUrl"
+                type="url"
+                placeholder="https://amazon.com/..."
+                value={productUrl}
+                onChange={(e) => setProductUrl(e.target.value)}
+                disabled={isLoading}
+                required
+                className="h-12 bg-secondary/50 border-border/50 rounded-xl px-4 placeholder:text-muted-foreground/50"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                disabled={isLoading}
+                onClick={async () => {
+                  try {
+                    const text = await navigator.clipboard.readText();
+                    setProductUrl(text);
+                    toast.success('Pasted product URL');
+                  } catch {
+                    toast.error('Failed to paste from clipboard');
+                  }
+                }}
+                className="h-12 w-12 shrink-0 rounded-xl border-border/50 bg-secondary/50 hover:bg-secondary"
+              >
+                <Clipboard className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
