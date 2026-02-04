@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { CHROME_EXTENSION_URL } from '@/components/ChromeExtensionBanner';
 
 const features = [
   {
@@ -149,9 +150,11 @@ export default function Extension() {
 
           {/* CTA Buttons */}
           <motion.div variants={itemVariants} className="flex flex-col sm:flex-row gap-4 justify-center mb-10">
-            <Button size="lg" className="rounded-2xl h-14 px-8 text-lg gap-3">
-              <Chrome className="w-5 h-5" />
-              Add to Chrome — It's Free
+            <Button size="lg" className="rounded-2xl h-14 px-8 text-lg gap-3" asChild>
+              <a href={CHROME_EXTENSION_URL} target="_blank" rel="noopener noreferrer">
+                <Chrome className="w-5 h-5" />
+                Add to Chrome — It's Free
+              </a>
             </Button>
             <Button size="lg" variant="outline" className="rounded-2xl h-14 px-8 text-lg" asChild>
               <Link to="/pricing">View Pro Features</Link>
@@ -284,9 +287,11 @@ export default function Extension() {
             <p className="text-muted-foreground mb-8">
               Join thousands of smart shoppers who never get scammed.
             </p>
-            <Button size="lg" className="rounded-2xl h-14 px-8 text-lg gap-3">
-              <Chrome className="w-5 h-5" />
-              Install Free Extension
+            <Button size="lg" className="rounded-2xl h-14 px-8 text-lg gap-3" asChild>
+              <a href={CHROME_EXTENSION_URL} target="_blank" rel="noopener noreferrer">
+                <Chrome className="w-5 h-5" />
+                Install Free Extension
+              </a>
             </Button>
             <div className="flex items-center justify-center gap-4 mt-6 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
