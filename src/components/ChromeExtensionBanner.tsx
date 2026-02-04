@@ -2,8 +2,7 @@ import { motion } from 'framer-motion';
 import { ExternalLink, Sparkles, Zap } from 'lucide-react';
 import { ChromeLogo } from '@/components/ChromeLogo';
 
-// Update this URL when your extension is published on the Chrome Web Store
-export const CHROME_EXTENSION_URL = '#';
+export const CHROME_EXTENSION_URL = 'https://chromewebstore.google.com/detail/truthcart-safe-shopping-s/jcabelfgniclfkknhjgdnibicgebacpo?authuser=0&hl=en';
 
 export function ChromeExtensionBanner() {
   return (
