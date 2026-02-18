@@ -35,6 +35,45 @@ export type Database = {
         }
         Relationships: []
       }
+      verified_deals: {
+        Row: {
+          created_at: string
+          deal_url: string
+          id: string
+          is_active: boolean
+          platform: string
+          price: number
+          product_image: string
+          product_name: string
+          trust_score: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deal_url: string
+          id?: string
+          is_active?: boolean
+          platform?: string
+          price: number
+          product_image: string
+          product_name: string
+          trust_score?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deal_url?: string
+          id?: string
+          is_active?: boolean
+          platform?: string
+          price?: number
+          product_image?: string
+          product_name?: string
+          trust_score?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
