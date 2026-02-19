@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, ExternalLink, AlertTriangle, CheckCircle, Sparkles, ThumbsUp, ThumbsDown, Database, Link2, Shield, Download, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { exportAnalysisPDF } from '@/lib/pdfExport';
+import { ShareReport } from '@/components/ShareReport';
 
 interface ResultsDashboardProps {
   result: AnalysisResult;
@@ -62,7 +63,8 @@ export function ResultsDashboard({ result, onBack }: ResultsDashboardProps) {
           <span className="text-sm font-medium">Analyze another product</span>
         </motion.button>
 
-        <motion.div variants={itemVariants}>
+        <motion.div variants={itemVariants} className="flex items-center gap-2">
+          <ShareReport reportId={result.id} productName={result.productName} trustScore={result.trustScore} />
           <Button
             variant="outline"
             size="sm"

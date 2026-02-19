@@ -35,6 +35,72 @@ export type Database = {
         }
         Relationships: []
       }
+      scans: {
+        Row: {
+          brand: string | null
+          breakdown: Json | null
+          community_signals: Json | null
+          confidence: string | null
+          created_at: string
+          data_sources: Json | null
+          id: string
+          is_public: boolean
+          mode: string
+          pinned: boolean
+          product_image: string | null
+          product_name: string
+          product_url: string
+          risk_factors: Json | null
+          status: string
+          trust_score: number
+          updated_at: string
+          user_id: string | null
+          verdict: string | null
+        }
+        Insert: {
+          brand?: string | null
+          breakdown?: Json | null
+          community_signals?: Json | null
+          confidence?: string | null
+          created_at?: string
+          data_sources?: Json | null
+          id?: string
+          is_public?: boolean
+          mode?: string
+          pinned?: boolean
+          product_image?: string | null
+          product_name: string
+          product_url: string
+          risk_factors?: Json | null
+          status?: string
+          trust_score?: number
+          updated_at?: string
+          user_id?: string | null
+          verdict?: string | null
+        }
+        Update: {
+          brand?: string | null
+          breakdown?: Json | null
+          community_signals?: Json | null
+          confidence?: string | null
+          created_at?: string
+          data_sources?: Json | null
+          id?: string
+          is_public?: boolean
+          mode?: string
+          pinned?: boolean
+          product_image?: string | null
+          product_name?: string
+          product_url?: string
+          risk_factors?: Json | null
+          status?: string
+          trust_score?: number
+          updated_at?: string
+          user_id?: string | null
+          verdict?: string | null
+        }
+        Relationships: []
+      }
       verified_deals: {
         Row: {
           created_at: string
