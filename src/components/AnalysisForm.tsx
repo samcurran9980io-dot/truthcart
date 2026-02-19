@@ -1,4 +1,4 @@
-import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,22 @@ import { AnalysisInput, AnalysisMode } from '@/types/analysis';
 import { cn } from '@/lib/utils';
 import { Zap, Search, Lock, Crown, Sparkles, Clipboard } from 'lucide-react';
 import { toast } from 'sonner';
+
+/** Strip tracking params & extract clean URL from messy text */
+function cleanAndExtractUrl(text: string): string {
+  const urlRegex = /(https?:\/\/[^\s<>"']+)/gi;
+  const match = text.match(urlRegex);
+  if (!match) return '';
+  let url = match[0].replace(/[,.)}\]]+$/, '');
+  try {
+    const parsed = new URL(url);
+    const trackingParams = ['ref', 'tag', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'fbclid', 'gclid', 'dclid', 'srsltid', 'psc', 'linkCode', 'linkId', 'pd_rd_w', 'pd_rd_r', 'pd_rd_wg', 'pf_rd_p', 'pf_rd_r', 'th', 'smid', 'spIA', 'sprefix', 'sr', 'crid', 'keywords', 'qid'];
+    trackingParams.forEach(p => parsed.searchParams.delete(p));
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
 
 export interface AnalysisFormRef {
   triggerSubmit: () => void;
@@ -212,7 +228,33 @@ export const AnalysisForm = forwardRef<AnalysisFormRef, AnalysisFormProps>(({
                 type="url"
                 placeholder="https://amazon.com/..."
                 value={productUrl}
-                onChange={(e) => setProductUrl(e.target.value)}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  const cleaned = cleanAndExtractUrl(raw);
+                  setProductUrl(cleaned || raw);
+                }}
+                onPaste={(e) => {
+                  e.preventDefault();
+                  const pasted = e.clipboardData.getData('text');
+                  const cleaned = cleanAndExtractUrl(pasted);
+                  if (cleaned) {
+                    setProductUrl(cleaned);
+                    toast.success('URL cleaned & ready');
+                    // Auto-trigger quick scan after a short delay
+                    if (productName.trim()) {
+                      setTimeout(() => {
+                        onSubmit({
+                          productName: productName.trim(),
+                          brand: brand.trim() || undefined,
+                          productUrl: cleaned,
+                          mode: 'fast',
+                        });
+                      }, 300);
+                    }
+                  } else {
+                    setProductUrl(pasted);
+                  }
+                }}
                 disabled={isLoading}
                 required
                 className="h-12 bg-secondary/50 border-border/50 rounded-xl px-4 placeholder:text-muted-foreground/50"
@@ -225,7 +267,8 @@ export const AnalysisForm = forwardRef<AnalysisFormRef, AnalysisFormProps>(({
                 onClick={async () => {
                   try {
                     const text = await navigator.clipboard.readText();
-                    setProductUrl(text);
+                    const cleaned = cleanAndExtractUrl(text);
+                    setProductUrl(cleaned || text);
                     toast.success('Pasted product URL');
                   } catch {
                     toast.error('Failed to paste from clipboard');

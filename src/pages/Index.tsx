@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { AnalysisForm, AnalysisFormRef } from '@/components/AnalysisForm';
@@ -10,7 +10,8 @@ import { StatsCounter, incrementProductsAnalyzed } from '@/components/StatsCount
 import { PlatformLogos } from '@/components/PlatformLogos';
 import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { LoadingSteps } from '@/components/LoadingSteps';
-import { HistoryList } from '@/components/HistoryList';
+import { VaultList } from '@/components/VaultList';
+import { CommunitySafePicks } from '@/components/CommunitySafePicks';
 import { CreditDisplay } from '@/components/CreditDisplay';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { useAuth } from '@/hooks/useAuth';
@@ -18,71 +19,76 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { triggerSuccessConfetti } from '@/lib/confetti';
 import {
-  getHistory,
-  saveToHistory,
-  getFullResult,
-  saveFullResult,
   getUserPlan,
   useCredits,
   canPerformScan,
+  saveToHistory,
+  saveFullResult,
+  getFullResult,
 } from '@/lib/storage';
 import { type UserPlan, shouldShowWarning, CREDIT_COSTS } from '@/lib/plans';
-import { AnalysisInput, AnalysisResult, HistoryItem } from '@/types/analysis';
+import { AnalysisInput, AnalysisResult } from '@/types/analysis';
 
 export default function Index() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const formRef = useRef<AnalysisFormRef>(null);
   
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [vaultItems, setVaultItems] = useState<any[]>([]);
   const [userPlan, setUserPlan] = useState<UserPlan>(getUserPlan());
   const [showUpgradePrompt, setShowUpgradePrompt] = useState<'no-credits' | 'deep-research-locked' | 'limit-reached' | null>(null);
   
-  // Auto-analysis from URL params (extension support)
   const [initialProductUrl, setInitialProductUrl] = useState('');
   const [initialProductName, setInitialProductName] = useState('');
   const [autoAnalysisTriggered, setAutoAnalysisTriggered] = useState(false);
 
-  const { isAuthenticated, signOut, loading: authLoading } = useAuth();
+  const { isAuthenticated, user, signOut, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
-  // Parse URL params and set initial values
+  // Parse URL params
   useEffect(() => {
     const urlParam = searchParams.get('url');
     const nameParam = searchParams.get('name');
     const autoParam = searchParams.get('auto');
     
-    if (urlParam) {
-      setInitialProductUrl(decodeURIComponent(urlParam));
-    }
-    if (nameParam) {
-      setInitialProductName(decodeURIComponent(nameParam));
-    }
+    if (urlParam) setInitialProductUrl(decodeURIComponent(urlParam));
+    if (nameParam) setInitialProductName(decodeURIComponent(nameParam));
     
-    // Auto-trigger analysis if auto=true and we have required fields
     if (autoParam === 'true' && urlParam && nameParam && !autoAnalysisTriggered) {
       setAutoAnalysisTriggered(true);
-      // Wait for form to populate, then trigger submit
-      setTimeout(() => {
-        formRef.current?.triggerSubmit();
-      }, 500);
+      setTimeout(() => { formRef.current?.triggerSubmit(); }, 500);
     }
     
-    // Clear URL params after reading them
     if (urlParam || nameParam || autoParam) {
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams, autoAnalysisTriggered]);
 
-  useEffect(() => {
-    setHistory(getHistory());
-    setUserPlan(getUserPlan());
-  }, []);
+  // Fetch vault items
+  const fetchVault = useCallback(async () => {
+    if (!user) {
+      setVaultItems([]);
+      return;
+    }
+    const { data } = await supabase
+      .from('scans')
+      .select('id, product_name, trust_score, status, mode, pinned, created_at')
+      .eq('user_id', user.id)
+      .order('pinned', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(20);
+    
+    if (data) setVaultItems(data);
+  }, [user]);
 
-  const refreshPlan = () => {
+  useEffect(() => {
     setUserPlan(getUserPlan());
-  };
+    fetchVault();
+  }, [fetchVault]);
+
+  const refreshPlan = () => setUserPlan(getUserPlan());
 
   const handleAnalysis = async (input: AnalysisInput) => {
     if (!canPerformScan(input.mode)) {
@@ -118,18 +124,36 @@ export default function Index() {
       const success = useCredits(input.mode);
       if (!success) throw new Error('Failed to deduct credits');
 
+      // Save locally (backward compat)
       saveFullResult(analysisResult);
       saveToHistory(analysisResult);
-      setHistory(getHistory());
       refreshPlan();
 
-      setResult(analysisResult);
+      // Save to Supabase scans table
+      await supabase.from('scans').insert({
+        id: analysisResult.id,
+        user_id: user?.id || null,
+        product_name: analysisResult.productName,
+        product_url: analysisResult.productUrl,
+        brand: analysisResult.brand || '',
+        trust_score: analysisResult.trustScore,
+        status: analysisResult.status,
+        mode: analysisResult.mode,
+        verdict: analysisResult.verdict,
+        breakdown: analysisResult.breakdown as any,
+        community_signals: analysisResult.communitySignals as any,
+        risk_factors: analysisResult.riskFactors as any,
+        data_sources: analysisResult.dataSources as any,
+        confidence: analysisResult.confidence || 'medium',
+        is_public: true,
+      });
 
-      // Trigger confetti on success and increment analytics
+      setResult(analysisResult);
+      fetchVault();
+
       triggerSuccessConfetti();
       incrementProductsAnalyzed();
 
-      const creditsUsed = input.mode === 'fast' ? CREDIT_COSTS.quickScan : CREDIT_COSTS.deepResearch;
       toast({
         title: 'Analysis complete',
         description: `Trust score: ${analysisResult.trustScore}/100`,
@@ -155,17 +179,36 @@ export default function Index() {
     }
   };
 
-  const handleHistorySelect = (id: string) => {
-    const savedResult = getFullResult(id);
-    if (savedResult) {
-      setResult(savedResult);
+  const handleVaultSelect = async (id: string) => {
+    // Try Supabase first, then local
+    const { data } = await supabase.from('scans').select('*').eq('id', id).single();
+    if (data) {
+      const mapped: AnalysisResult = {
+        id: data.id,
+        productName: data.product_name,
+        brand: data.brand || undefined,
+        productUrl: data.product_url,
+        mode: data.mode as 'fast' | 'deep',
+        trustScore: data.trust_score,
+        status: data.status as 'trusted' | 'mixed' | 'suspicious',
+        verdict: data.verdict || '',
+        breakdown: (data.breakdown as any[]) || [],
+        communitySignals: (data.community_signals as any[]) || [],
+        riskFactors: (data.risk_factors as any[]) || [],
+        dataSources: (data.data_sources as any[]) || [],
+        confidence: (data.confidence as 'low' | 'medium' | 'high') || 'medium',
+        analyzedAt: data.created_at,
+      };
+      setResult(mapped);
     } else {
-      toast({
-        title: 'Result not found',
-        description: 'This analysis result is no longer available.',
-        variant: 'destructive',
-      });
+      const local = getFullResult(id);
+      if (local) setResult(local);
+      else toast({ title: 'Result not found', variant: 'destructive' });
     }
+  };
+
+  const handleCommunityView = (id: string) => {
+    navigate(`/report/${id}`);
   };
 
   const handleBack = () => {
@@ -175,10 +218,7 @@ export default function Index() {
 
   const handleLogout = async () => {
     await signOut();
-    toast({
-      title: 'Signed out',
-      description: 'You have been signed out successfully.',
-    });
+    toast({ title: 'Signed out', description: 'You have been signed out successfully.' });
   };
 
   if (authLoading) {
@@ -198,7 +238,6 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-background relative">
-      {/* Floating Background Orbs */}
       <FloatingOrbs />
       
       <Header 
@@ -208,23 +247,18 @@ export default function Index() {
       />
 
       <main className="container mx-auto px-4 py-10 md:py-16 relative z-10">
-        {/* Loading State */}
         {isLoading && <LoadingSteps isLoading={isLoading} />}
 
-        {/* Results */}
         {!isLoading && result && (
           <ResultsDashboard result={result} onBack={handleBack} />
         )}
 
-        {/* Input Form */}
         {!isLoading && !result && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="max-w-5xl mx-auto"
           >
-
-            {/* Upgrade Prompt */}
             {showUpgradePrompt && (
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
@@ -238,10 +272,7 @@ export default function Index() {
               </motion.div>
             )}
 
-
-            {/* Main Layout */}
             <div className="grid lg:grid-cols-3 gap-8">
-              {/* Form Section */}
               <div className="lg:col-span-2">
                 <AnalysisForm
                   ref={formRef}
@@ -256,29 +287,31 @@ export default function Index() {
                   initialProductUrl={initialProductUrl}
                 />
                 
-                {/* Platform Logos */}
                 <PlatformLogos />
+
+                {/* Community Safe Picks */}
+                <CommunitySafePicks onViewReport={handleCommunityView} />
               </div>
 
-              {/* Sidebar */}
               <div className="lg:col-span-1 space-y-5">
-                {/* Credits - User's primary status */}
                 <CreditDisplay userPlan={userPlan} variant="full" />
 
-                {/* History - User's data */}
+                {/* TruthCart Vault */}
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 }}
                   className="bg-card rounded-3xl p-6 shadow-premium border border-border/50"
                 >
-                  <HistoryList items={history} onSelect={handleHistorySelect} />
+                  <VaultList
+                    items={vaultItems}
+                    onSelect={handleVaultSelect}
+                    onRefresh={fetchVault}
+                    isAuthenticated={isAuthenticated}
+                  />
                 </motion.div>
 
-                {/* Stats Counter - Social proof */}
                 <StatsCounter variant="sidebar" />
-
-                {/* Chrome Extension Banner - CTA */}
                 <ChromeExtensionBanner />
               </div>
             </div>
@@ -286,9 +319,7 @@ export default function Index() {
         )}
       </main>
 
-      {/* Footer with gradient divider */}
       <footer className="mt-auto relative">
-        {/* Gradient divider */}
         <div className="h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
