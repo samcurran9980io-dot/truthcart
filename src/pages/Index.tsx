@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom';
 import { Header } from '@/components/Header';
+import { SocialProofTicker } from '@/components/SocialProofTicker';
 import { AnalysisForm, AnalysisFormRef } from '@/components/AnalysisForm';
 import { ChromeExtensionBanner } from '@/components/ChromeExtensionBanner';
 import { FloatingOrbs } from '@/components/FloatingOrbs';
@@ -245,6 +246,7 @@ export default function Index() {
         onLogout={handleLogout} 
         userPlan={userPlan}
       />
+      <SocialProofTicker />
 
       <main className="container mx-auto px-4 py-10 md:py-16 relative z-10">
         {isLoading && <LoadingSteps isLoading={isLoading} />}
