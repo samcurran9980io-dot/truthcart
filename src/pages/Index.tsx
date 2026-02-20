@@ -13,6 +13,7 @@ import { ResultsDashboard } from '@/components/ResultsDashboard';
 import { LoadingSteps } from '@/components/LoadingSteps';
 import { VaultList } from '@/components/VaultList';
 import { CommunitySafePicks } from '@/components/CommunitySafePicks';
+import { Wishlist } from '@/components/Wishlist';
 import { CreditDisplay } from '@/components/CreditDisplay';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
 import { useAuth } from '@/hooks/useAuth';
@@ -154,6 +155,21 @@ export default function Index() {
 
       triggerSuccessConfetti();
       incrementProductsAnalyzed();
+
+      // Send suspicious product alert email if score < 40 and user is authenticated
+      if (analysisResult.trustScore < 40 && user?.email) {
+        supabase.functions.invoke('send-suspicious-alert', {
+          body: {
+            userEmail: user.email,
+            productName: analysisResult.productName,
+            productUrl: analysisResult.productUrl,
+            trustScore: analysisResult.trustScore,
+            status: analysisResult.status,
+            verdict: analysisResult.verdict,
+            reportId: analysisResult.id,
+          },
+        }).catch((err) => console.warn('Alert email failed:', err));
+      }
 
       toast({
         title: 'Analysis complete',
@@ -312,6 +328,9 @@ export default function Index() {
                     isAuthenticated={isAuthenticated}
                   />
                 </motion.div>
+
+                {/* Wishlist */}
+                <Wishlist isAuthenticated={isAuthenticated} userId={user?.id} />
 
                 <StatsCounter variant="sidebar" />
                 <ChromeExtensionBanner />
