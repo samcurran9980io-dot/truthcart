@@ -140,6 +140,50 @@ export type Database = {
         }
         Relationships: []
       }
+      wishlists: {
+        Row: {
+          created_at: string
+          id: string
+          product_image: string | null
+          product_name: string
+          product_url: string
+          scan_id: string
+          status: string
+          trust_score: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_image?: string | null
+          product_name: string
+          product_url: string
+          scan_id: string
+          status?: string
+          trust_score?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_image?: string | null
+          product_name?: string
+          product_url?: string
+          scan_id?: string
+          status?: string
+          trust_score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlists_scan_id_fkey"
+            columns: ["scan_id"]
+            isOneToOne: false
+            referencedRelation: "scans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { AnalysisResult } from '@/types/analysis';
 import { TrustGauge } from './TrustGauge';
 import { BreakdownBar } from './BreakdownBar';
 import { CommunityQuote } from './CommunityQuote';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ExternalLink, AlertTriangle, CheckCircle, Sparkles, ThumbsUp, ThumbsDown, Database, Link2, Shield, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, ExternalLink, AlertTriangle, CheckCircle, Sparkles, ThumbsUp, ThumbsDown, Database, Link2, Shield, Download, Loader2, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { exportAnalysisPDF } from '@/lib/pdfExport';
 import { ShareReport } from '@/components/ShareReport';
+import { useWishlist } from '@/components/Wishlist';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ResultsDashboardProps {
   result: AnalysisResult;
@@ -19,6 +21,14 @@ export function ResultsDashboard({ result, onBack }: ResultsDashboardProps) {
   const isPremium = result.mode === 'deep';
   const [feedbackGiven, setFeedbackGiven] = useState<'up' | 'down' | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const { user } = useAuth();
+  const { wishlisted, checkWishlisted, toggle, toggling } = useWishlist(user?.id);
+
+  useEffect(() => {
+    checkWishlisted(result.id);
+  }, [result.id, user?.id]);
+
+  const isWishlisted = wishlisted.has(result.id);
 
   const statusBadge = {
     trusted: { label: 'TRUSTED', bgClass: 'bg-trusted/10', textClass: 'text-trusted', borderClass: 'border-trusted/30' },
@@ -64,6 +74,24 @@ export function ResultsDashboard({ result, onBack }: ResultsDashboardProps) {
         </motion.button>
 
         <motion.div variants={itemVariants} className="flex items-center gap-2">
+          {/* Wishlist Heart */}
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={() => toggle(result.id, result.productName, result.productUrl, result.trustScore, result.status)}
+            disabled={toggling}
+            title={isWishlisted ? 'Remove from wishlist' : 'Save to wishlist'}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all',
+              isWishlisted
+                ? 'bg-suspicious/10 text-suspicious border-suspicious/30 hover:bg-suspicious/20'
+                : 'bg-secondary text-muted-foreground border-border hover:text-foreground'
+            )}
+          >
+            <Heart className={cn('w-3.5 h-3.5', isWishlisted && 'fill-current')} />
+            <span className="hidden sm:inline">{isWishlisted ? 'Saved' : 'Save'}</span>
+          </motion.button>
+
           <ShareReport reportId={result.id} productName={result.productName} trustScore={result.trustScore} />
           <Button
             variant="outline"
