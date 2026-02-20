@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { Header } from '@/components/Header';
@@ -54,8 +55,31 @@ export default function Report() {
     fetchReport();
   }, [id]);
 
+  const pageTitle = result
+    ? `${result.productName} — ${result.trustScore}/100 Trust Score | TruthCart`
+    : 'TruthCart Report';
+  const pageDesc = result
+    ? `TruthCart scanned this product and gave it a ${result.trustScore}/100 trust score (${result.status}). ${result.verdict}`
+    : 'View this TruthCart product trust report.';
+  const pageUrl = `${window.location.origin}/report/${id}`;
+
   return (
     <div className="min-h-screen bg-background relative">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDesc} />
+        {/* Open Graph */}
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDesc} />
+        <meta property="og:site_name" content="TruthCart" />
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDesc} />
+        <meta name="twitter:site" content="@TruthCart" />
+      </Helmet>
       <FloatingOrbs />
       <Header isAuthenticated={isAuthenticated} onLogout={signOut} userPlan={userPlan} />
 

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, ArrowRight, Pin, Share2, Trash2, PinOff, Bookmark } from 'lucide-react';
+import { ArrowRight, Pin, Share2, Trash2, PinOff, Bookmark, Search, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +33,8 @@ const statusColors: Record<string, string> = {
 
 export function VaultList({ items, onSelect, onRefresh, isAuthenticated }: VaultListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [clearingAll, setClearingAll] = useState(false);
 
   const handlePin = async (e: React.MouseEvent, id: string, currentPinned: boolean) => {
     e.stopPropagation();
@@ -68,6 +71,31 @@ export function VaultList({ items, onSelect, onRefresh, isAuthenticated }: Vault
     setDeletingId(null);
   };
 
+  const handleClearAll = async () => {
+    if (!window.confirm('Delete all scans from your Vault? This cannot be undone.')) return;
+    setClearingAll(true);
+    const ids = items.map((i) => i.id);
+    const { error } = await supabase.from('scans').delete().in('id', ids);
+    if (error) {
+      toast.error('Failed to clear vault');
+    } else {
+      toast.success('Vault cleared');
+      onRefresh();
+    }
+    setClearingAll(false);
+  };
+
+  const sorted = useMemo(() => {
+    return [...items]
+      .sort((a, b) => {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      })
+      .filter((item) =>
+        item.product_name.toLowerCase().includes(search.toLowerCase())
+      );
+  }, [items, search]);
+
   if (items.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
@@ -77,17 +105,51 @@ export function VaultList({ items, onSelect, onRefresh, isAuthenticated }: Vault
     );
   }
 
-  const sorted = [...items].sort((a, b) => {
-    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-  });
-
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider mb-3">
-        <Bookmark className="w-3.5 h-3.5" />
-        Your Vault
+      {/* Header row */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider">
+          <Bookmark className="w-3.5 h-3.5" />
+          Your Vault
+        </div>
+        {isAuthenticated && items.length > 0 && (
+          <button
+            onClick={handleClearAll}
+            disabled={clearingAll}
+            className="text-xs text-destructive/70 hover:text-destructive transition-colors font-medium flex items-center gap-1"
+          >
+            <XCircle className="w-3 h-3" />
+            Clear All
+          </button>
+        )}
       </div>
+
+      {/* Search */}
+      {items.length > 2 && (
+        <div className="relative mb-3">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search vault..."
+            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <XCircle className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+      )}
+
+      {sorted.length === 0 && search && (
+        <p className="text-xs text-muted-foreground text-center py-4">No results for "{search}"</p>
+      )}
       <AnimatePresence>
         {sorted.map((item) => (
           <motion.div
