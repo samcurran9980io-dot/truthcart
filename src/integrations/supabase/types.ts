@@ -35,6 +35,44 @@ export type Database = {
         }
         Relationships: []
       }
+      price_history: {
+        Row: {
+          currency: string
+          id: string
+          price: number
+          product_url: string
+          recorded_at: string
+          user_id: string
+          wishlist_id: string
+        }
+        Insert: {
+          currency?: string
+          id?: string
+          price: number
+          product_url: string
+          recorded_at?: string
+          user_id: string
+          wishlist_id: string
+        }
+        Update: {
+          currency?: string
+          id?: string
+          price?: number
+          product_url?: string
+          recorded_at?: string
+          user_id?: string
+          wishlist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_history_wishlist_id_fkey"
+            columns: ["wishlist_id"]
+            isOneToOne: false
+            referencedRelation: "wishlists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scans: {
         Row: {
           brand: string | null
@@ -144,33 +182,42 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_known_price: number | null
+          price_alert_enabled: boolean
           product_image: string | null
           product_name: string
           product_url: string
           scan_id: string
           status: string
+          target_price: number | null
           trust_score: number
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          last_known_price?: number | null
+          price_alert_enabled?: boolean
           product_image?: string | null
           product_name: string
           product_url: string
           scan_id: string
           status?: string
+          target_price?: number | null
           trust_score?: number
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          last_known_price?: number | null
+          price_alert_enabled?: boolean
           product_image?: string | null
           product_name?: string
           product_url?: string
           scan_id?: string
           status?: string
+          target_price?: number | null
           trust_score?: number
           user_id?: string
         }

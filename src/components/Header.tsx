@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { LogOut, Zap, Crown, AlertTriangle, Sun, Moon } from 'lucide-react';
+import { LogOut, Zap, Crown, AlertTriangle, Sun, Moon, LayoutDashboard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { type UserPlan, shouldShowWarning, getPlanById } from '@/lib/plans';
@@ -144,6 +144,15 @@ export function Header({ isAuthenticated, onLogout, userPlan }: HeaderProps) {
           {/* Auth Actions */}
           {isAuthenticated ? (
             <>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/dashboard"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                  title="Dashboard"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                </Link>
+              </motion.div>
               <Link 
                 to="/pricing" 
                 className="hidden sm:inline-flex text-sm text-muted-foreground hover:text-foreground transition-colors px-3 py-2"
