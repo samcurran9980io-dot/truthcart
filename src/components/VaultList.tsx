@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Pin, Share2, Trash2, PinOff, Bookmark, Search, XCircle } from 'lucide-react';
+import { ArrowRight, Pin, Share2, Trash2, PinOff, Bookmark, Search, XCircle, GitCompare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -23,6 +24,7 @@ interface VaultListProps {
   onSelect: (id: string) => void;
   onRefresh: () => void;
   isAuthenticated: boolean;
+  onCompare?: (ids: string[]) => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -31,10 +33,18 @@ const statusColors: Record<string, string> = {
   suspicious: 'text-suspicious',
 };
 
-export function VaultList({ items, onSelect, onRefresh, isAuthenticated }: VaultListProps) {
+export function VaultList({ items, onSelect, onRefresh, isAuthenticated, onCompare }: VaultListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [clearingAll, setClearingAll] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [compareMode, setCompareMode] = useState(false);
+
+  const toggleCompareItem = (id: string) => {
+    setCompareIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : prev.length < 3 ? [...prev, id] : prev
+    );
+  };
 
   const handlePin = async (e: React.MouseEvent, id: string, currentPinned: boolean) => {
     e.stopPropagation();
@@ -113,16 +123,41 @@ export function VaultList({ items, onSelect, onRefresh, isAuthenticated }: Vault
           <Bookmark className="w-3.5 h-3.5" />
           Your Vault
         </div>
-        {isAuthenticated && items.length > 0 && (
-          <button
-            onClick={handleClearAll}
-            disabled={clearingAll}
-            className="text-xs text-destructive/70 hover:text-destructive transition-colors font-medium flex items-center gap-1"
-          >
-            <XCircle className="w-3 h-3" />
-            Clear All
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {onCompare && items.length >= 2 && (
+            <button
+              onClick={() => {
+                if (compareMode && compareIds.length >= 2) {
+                  onCompare(compareIds);
+                  setCompareMode(false);
+                  setCompareIds([]);
+                } else {
+                  setCompareMode(!compareMode);
+                  setCompareIds([]);
+                }
+              }}
+              className={cn(
+                'text-xs font-medium flex items-center gap-1 transition-colors',
+                compareMode
+                  ? compareIds.length >= 2 ? 'text-primary hover:text-primary/80' : 'text-muted-foreground'
+                  : 'text-primary hover:text-primary/80'
+              )}
+            >
+              <GitCompare className="w-3 h-3" />
+              {compareMode ? (compareIds.length >= 2 ? 'Compare Now' : `Select ${2 - compareIds.length} more`) : 'Compare'}
+            </button>
+          )}
+          {isAuthenticated && items.length > 0 && (
+            <button
+              onClick={handleClearAll}
+              disabled={clearingAll}
+              className="text-xs text-destructive/70 hover:text-destructive transition-colors font-medium flex items-center gap-1"
+            >
+              <XCircle className="w-3 h-3" />
+              Clear All
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Search */}
@@ -160,9 +195,17 @@ export function VaultList({ items, onSelect, onRefresh, isAuthenticated }: Vault
             exit={{ opacity: 0, x: -20 }}
           >
             <button
-              onClick={() => onSelect(item.id)}
-              className="w-full flex items-center justify-between p-4 rounded-xl bg-background border border-border hover:border-primary/50 transition-all duration-200 text-left group"
+              onClick={() => compareMode ? toggleCompareItem(item.id) : onSelect(item.id)}
+              className={cn(
+                "w-full flex items-center justify-between p-4 rounded-xl bg-background border transition-all duration-200 text-left group",
+                compareMode && compareIds.includes(item.id) ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+              )}
             >
+              {compareMode && (
+                <div className="mr-2 flex-shrink-0">
+                  <Checkbox checked={compareIds.includes(item.id)} className="pointer-events-none" />
+                </div>
+              )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   {item.pinned && <Pin className="w-3 h-3 text-primary flex-shrink-0" />}

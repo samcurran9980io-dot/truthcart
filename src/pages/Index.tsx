@@ -16,7 +16,9 @@ import { CommunitySafePicks } from '@/components/CommunitySafePicks';
 import { Wishlist } from '@/components/Wishlist';
 import { CreditDisplay } from '@/components/CreditDisplay';
 import { UpgradePrompt } from '@/components/UpgradePrompt';
+import { CompareView } from '@/components/CompareView';
 import { useAuth } from '@/hooks/useAuth';
+import { useNotifications } from '@/hooks/useNotifications';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { triggerSuccessConfetti } from '@/lib/confetti';
@@ -38,6 +40,7 @@ export default function Index() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const [compareItems, setCompareItems] = useState<AnalysisResult[]>([]);
   const [vaultItems, setVaultItems] = useState<any[]>([]);
   const [userPlan, setUserPlan] = useState<UserPlan>(getUserPlan());
   const [showUpgradePrompt, setShowUpgradePrompt] = useState<'no-credits' | 'deep-research-locked' | 'limit-reached' | null>(null);
@@ -48,6 +51,7 @@ export default function Index() {
 
   const { isAuthenticated, user, signOut, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { sendNotification } = useNotifications();
 
   // Parse URL params
   useEffect(() => {
@@ -169,6 +173,12 @@ export default function Index() {
             reportId: analysisResult.id,
           },
         }).catch((err) => console.warn('Alert email failed:', err));
+
+        // Browser push notification for suspicious products
+        sendNotification('⚠️ Suspicious Product Detected', {
+          body: `${analysisResult.productName} scored ${analysisResult.trustScore}/100. Tap to view report.`,
+          tag: `scan-${analysisResult.id}`,
+        });
       }
 
       toast({
@@ -230,7 +240,39 @@ export default function Index() {
 
   const handleBack = () => {
     setResult(null);
+    setCompareItems([]);
     setShowUpgradePrompt(null);
+  };
+
+  const handleCompare = async (ids: string[]) => {
+    const results: AnalysisResult[] = [];
+    for (const id of ids) {
+      const { data } = await supabase.from('scans').select('*').eq('id', id).single();
+      if (data) {
+        results.push({
+          id: data.id,
+          productName: data.product_name,
+          brand: data.brand || undefined,
+          productUrl: data.product_url,
+          mode: data.mode as 'fast' | 'deep',
+          trustScore: data.trust_score,
+          status: data.status as 'trusted' | 'mixed' | 'suspicious',
+          verdict: data.verdict || '',
+          breakdown: (data.breakdown as any[]) || [],
+          communitySignals: (data.community_signals as any[]) || [],
+          riskFactors: (data.risk_factors as any[]) || [],
+          dataSources: (data.data_sources as any[]) || [],
+          confidence: (data.confidence as 'low' | 'medium' | 'high') || 'medium',
+          analyzedAt: data.created_at,
+        });
+      }
+    }
+    if (results.length >= 2) {
+      setCompareItems(results);
+      setResult(null);
+    } else {
+      toast({ title: 'Could not load products for comparison', variant: 'destructive' });
+    }
   };
 
   const handleLogout = async () => {
@@ -267,11 +309,17 @@ export default function Index() {
       <main className="container mx-auto px-4 py-10 md:py-16 relative z-10">
         {isLoading && <LoadingSteps isLoading={isLoading} />}
 
-        {!isLoading && result && (
+        {!isLoading && compareItems.length >= 2 && (
+          <CompareView items={compareItems} onBack={handleBack} />
+        )}
+
+        
+
+        {!isLoading && result && compareItems.length === 0 && (
           <ResultsDashboard result={result} onBack={handleBack} />
         )}
 
-        {!isLoading && !result && (
+        {!isLoading && !result && compareItems.length === 0 && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -326,6 +374,7 @@ export default function Index() {
                     onSelect={handleVaultSelect}
                     onRefresh={fetchVault}
                     isAuthenticated={isAuthenticated}
+                    onCompare={handleCompare}
                   />
                 </motion.div>
 

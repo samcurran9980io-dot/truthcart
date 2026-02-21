@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { PriceTracker } from '@/components/PriceTracker';
 
 interface WishlistItem {
   id: string;
@@ -15,6 +16,9 @@ interface WishlistItem {
   trust_score: number;
   status: string;
   created_at: string;
+  last_known_price?: number | null;
+  target_price?: number | null;
+  price_alert_enabled?: boolean;
 }
 
 interface WishlistProps {
@@ -179,6 +183,20 @@ export function Wishlist({ isAuthenticated, userId }: WishlistProps) {
                     </button>
                   </div>
                 </div>
+                {/* Price Tracker */}
+                {userId && (
+                  <div className="mt-2 pt-2 border-t border-border/50">
+                    <PriceTracker
+                      wishlistId={item.id}
+                      productName={item.product_name}
+                      lastKnownPrice={item.last_known_price}
+                      targetPrice={item.target_price}
+                      alertEnabled={item.price_alert_enabled}
+                      userId={userId}
+                      productUrl={item.product_url}
+                    />
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}
