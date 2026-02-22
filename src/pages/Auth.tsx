@@ -91,10 +91,9 @@ export default function Auth() {
           // Apply signup bonus credits for new users
           applySignupBonus();
           toast({
-            title: 'Account created!',
-            description: 'Welcome to TruthCart! You received 5 bonus credits.',
+            title: 'Check your email!',
+            description: 'We sent you a verification link. Please verify your email to get started.',
           });
-          navigate('/');
         }
       }
     } catch (error) {
