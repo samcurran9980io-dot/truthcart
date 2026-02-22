@@ -362,6 +362,9 @@ export default function Index() {
               <div className="lg:col-span-1 space-y-5">
                 <CreditDisplay userPlan={userPlan} variant="full" />
 
+                {/* Chrome Extension - prominent placement */}
+                <ChromeExtensionBanner />
+
                 {/* TruthCart Vault */}
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }}
@@ -382,7 +385,6 @@ export default function Index() {
                 <Wishlist isAuthenticated={isAuthenticated} userId={user?.id} />
 
                 <StatsCounter variant="sidebar" />
-                <ChromeExtensionBanner />
               </div>
             </div>
           </motion.div>
