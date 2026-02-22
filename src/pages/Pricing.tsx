@@ -279,14 +279,14 @@ export default function Pricing() {
                       "font-bold text-lg",
                       isHighlighted ? "text-background" : "text-foreground"
                     )}>
-                      {plan.credits} credits{plan.id !== 'free' && '/month'}
+                      {plan.credits} credits{plan.id === 'free' ? '/day' : '/month'}
                     </p>
                     <p className={cn(
                       "text-xs mt-0.5",
                       isHighlighted ? "text-background/60" : "text-muted-foreground"
                     )}>
                       {plan.id === 'free' 
-                        ? "That's 10 product checks"
+                        ? "Resets daily at midnight UTC"
                         : `Up to ${plan.credits} products/month`}
                     </p>
                   </div>
@@ -403,7 +403,7 @@ export default function Pricing() {
             variants={itemVariants}
             className="text-center text-muted-foreground mt-10"
           >
-            Credits reset monthly. No rollover.
+            Free plan resets daily at midnight UTC. Paid plans reset monthly. No rollover.
           </motion.p>
         </motion.div>
 
@@ -442,7 +442,7 @@ export default function Pricing() {
                 <AccordionContent className="text-muted-foreground pb-5">
                   Credits are used to perform product analyses. A Quick Scan costs 1 credit and provides fast, 
                   surface-level analysis. Deep Research costs 3 credits and includes comprehensive analysis with 
-                  community insights, risk factors, and data sources. Credits reset monthly and don't roll over.
+                  community insights, risk factors, and data sources. Free plan credits (5/day) reset daily at midnight UTC. Paid plan credits reset monthly. Credits don't roll over.
                 </AccordionContent>
               </AccordionItem>
 
