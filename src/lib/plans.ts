@@ -41,9 +41,9 @@ export const PLANS: Plan[] = [
     yearlyPrice: 0,
     yearlyMonthlyEquivalent: 0,
     yearlySavings: 0,
-    credits: 5, // 5 Quick Scans total (not monthly)
+    credits: 5, // 5 credits daily (resets at midnight UTC)
     features: [
-      '5 Quick Scans total',
+      '5 credits/day (resets at midnight UTC)',
       'No login required',
       'Basic trust scores',
       'Limited history',

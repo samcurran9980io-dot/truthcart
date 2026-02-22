@@ -161,7 +161,10 @@ export function CreditDisplay({ userPlan, variant = 'compact', showUpgradeButton
       )}
 
       <p className="text-xs text-muted-foreground mt-4 text-center">
-        Resets {new Date(userPlan.renewsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+        {userPlan.planId === 'free' 
+          ? 'Resets daily at midnight UTC'
+          : `Resets ${new Date(userPlan.renewsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+        }
       </p>
     </motion.div>
   );

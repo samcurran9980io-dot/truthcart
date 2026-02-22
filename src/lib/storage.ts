@@ -7,17 +7,21 @@ const MAX_HISTORY = 5;
 
 const SIGNUP_BONUS_KEY = 'truthcart_signup_bonus_claimed';
 
+// Get next midnight UTC
+function getNextMidnightUTC(): string {
+  const now = new Date();
+  const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  return tomorrow.toISOString();
+}
+
 // Get default plan for new users (without signup)
 function getDefaultPlan(): UserPlan {
-  const nextMonth = new Date();
-  nextMonth.setMonth(nextMonth.getMonth() + 1);
-  
   return {
     planId: 'free',
     billingCycle: 'monthly',
     creditsUsed: 0,
-    creditsTotal: 5, // 5 credits for non-registered users
-    renewsAt: nextMonth.toISOString(),
+    creditsTotal: 5, // 5 credits daily
+    renewsAt: getNextMidnightUTC(),
   };
 }
 
@@ -28,15 +32,12 @@ export function applySignupBonus(): UserPlan {
     return getUserPlan();
   }
   
-  const nextMonth = new Date();
-  nextMonth.setMonth(nextMonth.getMonth() + 1);
-  
   const bonusPlan: UserPlan = {
     planId: 'free',
     billingCycle: 'monthly',
     creditsUsed: 0,
-    creditsTotal: 5, // 5 bonus credits for signup
-    renewsAt: nextMonth.toISOString(),
+    creditsTotal: 5, // 5 daily credits
+    renewsAt: getNextMidnightUTC(),
   };
   
   localStorage.setItem(SIGNUP_BONUS_KEY, 'true');
@@ -55,18 +56,29 @@ export function getUserPlan(): UserPlan {
     
     const plan = JSON.parse(data) as UserPlan;
     
-    // Check if credits need to reset (for paid plans)
-    if (plan.planId !== 'free' && new Date(plan.renewsAt) < new Date()) {
-      const planDef = getPlanById(plan.planId);
-      const nextMonth = new Date();
-      nextMonth.setMonth(nextMonth.getMonth() + 1);
-      
-      return {
-        ...plan,
-        creditsUsed: 0,
-        creditsTotal: planDef?.credits ?? plan.creditsTotal,
-        renewsAt: nextMonth.toISOString(),
-      };
+    // Check if credits need to reset
+    if (new Date(plan.renewsAt) < new Date()) {
+      if (plan.planId === 'free') {
+        // Free plan resets daily at midnight UTC
+        return {
+          ...plan,
+          creditsUsed: 0,
+          creditsTotal: 5,
+          renewsAt: getNextMidnightUTC(),
+        };
+      } else {
+        // Paid plans reset monthly
+        const planDef = getPlanById(plan.planId);
+        const nextMonth = new Date();
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        
+        return {
+          ...plan,
+          creditsUsed: 0,
+          creditsTotal: planDef?.credits ?? plan.creditsTotal,
+          renewsAt: nextMonth.toISOString(),
+        };
+      }
     }
     
     return plan;
