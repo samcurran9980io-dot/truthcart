@@ -6,14 +6,14 @@ import { FloatingOrbs } from '@/components/FloatingOrbs';
 import { useAuth } from '@/hooks/useAuth';
 import { getUserPlan } from '@/lib/storage';
 import { CreditDisplay } from '@/components/CreditDisplay';
+import { ChromeExtensionBanner } from '@/components/ChromeExtensionBanner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import {
   BarChart3, Shield, TrendingUp, Clock, AlertTriangle,
-  CheckCircle, XCircle, Star, Bell, BellOff, Settings,
-  User, LogOut, ChevronRight
+  CheckCircle, User, Bell, BellOff, ChevronRight, Zap, Search
 } from 'lucide-react';
 import { useNotifications } from '@/hooks/useNotifications';
 import { toast } from 'sonner';
@@ -122,10 +122,10 @@ export default function Dashboard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-5xl mx-auto"
+          className="max-w-6xl mx-auto"
         >
           {/* Profile Header */}
-          <div className="bg-card rounded-3xl p-8 shadow-premium border border-border/50 mb-8">
+          <div className="bg-card rounded-3xl p-6 md:p-8 shadow-premium border border-border/50 mb-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -136,7 +136,7 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground">{user?.email}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Button
                   variant="outline"
                   size="sm"
@@ -144,7 +144,18 @@ export default function Dashboard() {
                   onClick={handleNotificationToggle}
                 >
                   {permission === 'granted' ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
-                  {permission === 'granted' ? 'Notifications On' : 'Enable Notifications'}
+                  <span className="hidden sm:inline">{permission === 'granted' ? 'Notifications On' : 'Enable Alerts'}</span>
+                </Button>
+                <Button
+                  variant="hero"
+                  size="sm"
+                  className="rounded-xl gap-2"
+                  asChild
+                >
+                  <Link to="/">
+                    <Search className="w-4 h-4" />
+                    New Scan
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -167,104 +178,145 @@ export default function Dashboard() {
             ))}
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Credits */}
-            <CreditDisplay userPlan={userPlan} variant="full" />
+          {/* Main Content: 2-column layout */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Left column - Main content */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Recent Scans */}
+              <div className="bg-card rounded-3xl p-6 shadow-premium border border-border/50">
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-muted-foreground" />
+                    Recent Scans
+                  </h3>
+                  <Link to="/" className="text-xs text-primary hover:underline">View All →</Link>
+                </div>
 
-            {/* Recent Scans */}
-            <div className="md:col-span-2 bg-card rounded-3xl p-6 shadow-premium border border-border/50">
-              <div className="flex items-center justify-between mb-5">
-                <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  Recent Scans
-                </h3>
-                <Link to="/" className="text-xs text-primary hover:underline">View All →</Link>
+                {recentScans.length === 0 ? (
+                  <div className="text-center py-10">
+                    <Search className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground mb-3">No scans yet. Start analyzing products!</p>
+                    <Button variant="hero" size="sm" className="rounded-xl" asChild>
+                      <Link to="/">
+                        <Zap className="w-4 h-4 mr-1" />
+                        Scan a Product
+                      </Link>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {recentScans.map((scan) => (
+                      <Link
+                        key={scan.id}
+                        to={`/report/${scan.id}`}
+                        className="flex items-center justify-between p-3.5 rounded-xl hover:bg-secondary/50 transition-colors group"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{scan.product_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(scan.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              'text-xs font-semibold border-0',
+                              scan.status === 'trusted' ? 'bg-trusted/10 text-trusted' :
+                              scan.status === 'suspicious' ? 'bg-suspicious/10 text-suspicious' : 'bg-mixed/10 text-mixed'
+                            )}
+                          >
+                            {scan.trust_score}/100
+                          </Badge>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {recentScans.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">No scans yet. Start analyzing!</p>
-              ) : (
-                <div className="space-y-2">
-                  {recentScans.map((scan) => (
-                    <Link
-                      key={scan.id}
-                      to={`/report/${scan.id}`}
-                      className="flex items-center justify-between p-3 rounded-xl hover:bg-secondary/50 transition-colors group"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{scan.product_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(scan.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={cn(
-                          'text-sm font-semibold',
-                          scan.status === 'trusted' ? 'text-trusted' :
-                          scan.status === 'suspicious' ? 'text-suspicious' : 'text-mixed'
-                        )}>
-                          {scan.trust_score}/100
-                        </span>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+              {/* Scan Distribution */}
+              {stats.total > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="bg-card rounded-3xl p-6 shadow-premium border border-border/50"
+                >
+                  <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-muted-foreground" />
+                    Scan Distribution
+                  </h3>
+                  <div className="flex gap-1 h-8 rounded-xl overflow-hidden">
+                    {stats.trusted > 0 && (
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(stats.trusted / stats.total) * 100}%` }}
+                        transition={{ duration: 0.8 }}
+                        className="bg-trusted rounded-l-lg flex items-center justify-center"
+                      >
+                        <span className="text-[10px] font-bold text-background">{stats.trusted}</span>
+                      </motion.div>
+                    )}
+                    {stats.mixed > 0 && (
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(stats.mixed / stats.total) * 100}%` }}
+                        transition={{ duration: 0.8, delay: 0.1 }}
+                        className="bg-mixed flex items-center justify-center"
+                      >
+                        <span className="text-[10px] font-bold text-background">{stats.mixed}</span>
+                      </motion.div>
+                    )}
+                    {stats.suspicious > 0 && (
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${(stats.suspicious / stats.total) * 100}%` }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                        className="bg-suspicious rounded-r-lg flex items-center justify-center"
+                      >
+                        <span className="text-[10px] font-bold text-background">{stats.suspicious}</span>
+                      </motion.div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-trusted" /> Trusted</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-mixed" /> Mixed</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-suspicious" /> Suspicious</span>
+                  </div>
+                </motion.div>
               )}
             </div>
-          </div>
 
-          {/* Scan Distribution */}
-          {stats.total > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mt-6 bg-card rounded-3xl p-6 shadow-premium border border-border/50"
-            >
-              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Shield className="w-4 h-4 text-muted-foreground" />
-                Scan Distribution
-              </h3>
-              <div className="flex gap-1 h-8 rounded-xl overflow-hidden">
-                {stats.trusted > 0 && (
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(stats.trusted / stats.total) * 100}%` }}
-                    transition={{ duration: 0.8 }}
-                    className="bg-trusted rounded-l-lg flex items-center justify-center"
-                  >
-                    <span className="text-[10px] font-bold text-background">{stats.trusted}</span>
-                  </motion.div>
-                )}
-                {stats.mixed > 0 && (
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(stats.mixed / stats.total) * 100}%` }}
-                    transition={{ duration: 0.8, delay: 0.1 }}
-                    className="bg-mixed flex items-center justify-center"
-                  >
-                    <span className="text-[10px] font-bold text-background">{stats.mixed}</span>
-                  </motion.div>
-                )}
-                {stats.suspicious > 0 && (
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(stats.suspicious / stats.total) * 100}%` }}
-                    transition={{ duration: 0.8, delay: 0.2 }}
-                    className="bg-suspicious rounded-r-lg flex items-center justify-center"
-                  >
-                    <span className="text-[10px] font-bold text-background">{stats.suspicious}</span>
-                  </motion.div>
-                )}
+            {/* Right sidebar */}
+            <div className="space-y-6">
+              <CreditDisplay userPlan={userPlan} variant="full" />
+              <ChromeExtensionBanner />
+
+              {/* Quick Actions */}
+              <div className="bg-card rounded-3xl p-6 shadow-premium border border-border/50">
+                <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-muted-foreground" />
+                  Quick Actions
+                </h3>
+                <div className="space-y-2">
+                  <Button variant="outline" className="w-full justify-start rounded-xl gap-2 text-sm" asChild>
+                    <Link to="/">
+                      <Search className="w-4 h-4" />
+                      Analyze a Product
+                    </Link>
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start rounded-xl gap-2 text-sm" asChild>
+                    <Link to="/pricing">
+                      <TrendingUp className="w-4 h-4" />
+                      Upgrade Plan
+                    </Link>
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-trusted" /> Trusted</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-mixed" /> Mixed</span>
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-suspicious" /> Suspicious</span>
-              </div>
-            </motion.div>
-          )}
+            </div>
+          </div>
         </motion.div>
       </main>
     </div>
