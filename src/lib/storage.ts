@@ -32,12 +32,11 @@ export function applySignupBonus(): UserPlan {
     return getUserPlan();
   }
   
+  // Give 10 bonus credits on top of the current plan
+  const currentPlan = getUserPlan();
   const bonusPlan: UserPlan = {
-    planId: 'free',
-    billingCycle: 'monthly',
-    creditsUsed: 0,
-    creditsTotal: 5, // 5 daily credits
-    renewsAt: getNextMidnightUTC(),
+    ...currentPlan,
+    creditsTotal: currentPlan.creditsTotal + 10,
   };
   
   localStorage.setItem(SIGNUP_BONUS_KEY, 'true');
